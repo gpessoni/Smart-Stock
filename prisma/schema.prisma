@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Permissions {
+  id          String   @id @default(uuid())
+  route       String   @unique
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Departments {
+  id          String   @id @default(uuid())
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TypeProducts {
+  id          String     @id @default(uuid())
+  description String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  Product     Products[]
+}
+
+model GroupProduct {
+  id          String     @id @default(uuid())
+  code        String     @unique
+  description String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  Product     Products[]
+}
+
+model UnitOfMeasure {
+  id           String     @id @default(uuid())
+  description  String
+  abbreviation String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  Product      Products[]
+}
+
+model Products {
+  id                     String                  @id @default(uuid())
+  code                   String                  @unique
+  description            String
+  typeProductId          String
+  typeProduct            TypeProducts            @relation(fields: [typeProductId], references: [id])
+  groupProductId         String
+  groupProduct           GroupProduct            @relation(fields: [groupProductId], references: [id])
+  unitOfMeasureId        String
+  unitOfMeasure          UnitOfMeasure           @relation(fields: [unitOfMeasureId], references: [id])
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  ProductStorageBalances ProductStorageBalance[]
+  ProductInventories     ProductInventory[]
+  StockRequestItem       StockRequestItem[]
+  AddressTransfer        AddressTransfer[]
+  SeparationOrderItem    SeparationOrderItem[]
+}
+
+model Storage {
+  id             String           @id @default(uuid())
+  code           String           @unique
+  description    String
+  StorageAddress StorageAddress[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model StorageAddress {
+  id                    String                  @id @default(uuid())
+  address               String
+  description           String
+  storageId             String
+  storage               Storage                 @relation(fields: [storageId], references: [id])
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  ProductStorageBalance ProductStorageBalance[]
+  ProductInventory      ProductInventory[]
+  StockRequestItem      StockRequestItem[]
+  fromAddressTransfer   AddressTransfer[]       @relation("FromAddress")
+  toAddressTransfer     AddressTransfer[]       @relation("ToAddress")
+  SeparationOrderItem   SeparationOrderItem[]
+}
+
+model ProductStorageBalance {
+  id               String         @id @default(uuid())
+  productId        String
+  product          Products       @relation(fields: [productId], references: [id])
+  storageAddressId String
+  storageAddress   StorageAddress @relation(fields: [storageAddressId], references: [id])
+  balance          Int            @default(0)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+model ProductInventory {
+  id               String          @id @default(uuid())
+  productId        String
+  product          Products        @relation(fields: [productId], references: [id])
+  storageAddressId String
+  storageAddress   StorageAddress  @relation(fields: [storageAddressId], references: [id])
+  quantity         Int
+  status           InventoryStatus @default(NOT_PROCESSED)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+enum InventoryStatus {
+  NOT_PROCESSED
+  PROCESSED
+}
+
+model StockRequest {
+  id        String             @id @default(uuid())
+  status    StockRequestStatus @default(PENDING)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  items     StockRequestItem[]
+}
+
+model StockRequestItem {
+  id               String         @id @default(uuid())
+  stockRequestId   String
+  stockRequest     StockRequest   @relation(fields: [stockRequestId], references: [id])
+  productId        String
+  product          Products       @relation(fields: [productId], references: [id])
+  storageAddressId String
+  storageAddress   StorageAddress @relation(fields: [storageAddressId], references: [id])
+  quantity         Int
+}
+
+enum StockRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model AddressTransfer {
+  id            String         @id @default(uuid())
+  productId     String
+  product       Products       @relation(fields: [productId], references: [id])
+  fromAddressId String
+  fromAddress   StorageAddress @relation("FromAddress", fields: [fromAddressId], references: [id])
+  toAddressId   String
+  toAddress     StorageAddress @relation("ToAddress", fields: [toAddressId], references: [id])
+  quantity      Int
+  createdAt     DateTime       @default(now())
+}
+
+model SeparationOrder {
+  id        String                @id @default(uuid())
+  code      String                @unique
+  status    SeparationStatus      @default(PENDING)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  items     SeparationOrderItem[]
+}
+
+model SeparationOrderItem {
+  id                String               @id @default(uuid())
+  separationOrderId String
+  separationOrder   SeparationOrder      @relation(fields: [separationOrderId], references: [id])
+  productId         String
+  product           Products             @relation(fields: [productId], references: [id])
+  storageAddressId  String
+  storageAddress    StorageAddress       @relation(fields: [storageAddressId], references: [id])
+  quantity          Int
+  status            SeparationItemStatus @default(NOT_SEPARATED)
+}
+
+enum SeparationStatus {
+  PENDING
+  SEPARATED
+  DELIVERED
+}
+
+enum SeparationItemStatus {
+  NOT_SEPARATED
+  SEPARATED
+  DELIVERED
+}
