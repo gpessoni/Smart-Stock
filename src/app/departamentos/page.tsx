@@ -1,12 +1,10 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, SetStateAction } from "react"
 import { Skeleton } from "primereact/skeleton"
 import { DataTable } from "primereact/datatable"
 import { Button } from "primereact/button"
 import { Dialog } from "primereact/dialog"
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog"
-import { InputText } from "primereact/inputtext"
 import { Toast } from "primereact/toast"
 import Navbar from "@/components/Navbar"
 import styles from "./../page.module.css"
@@ -15,150 +13,179 @@ import "primereact/resources/themes/lara-light-cyan/theme.css"
 import "primeicons/primeicons.css"
 import { Toolbar } from "primereact/toolbar"
 import DeleteButton from "@/components/Forms/DeleteButton"
+import { InputSwitch } from "primereact/inputswitch"
+import { InputText } from "primereact/inputtext"
+import { ConfirmDialog } from "primereact/confirmdialog"
 
 type Department = {
-    id: string | null
+    id: string
     description: string
     createdAt?: Date
     updatedAt?: Date
 }
 
+interface Permission {
+    id: string
+    description: string
+}
+
 export default function Departments() {
     const [loading, setLoading] = useState<boolean>(true)
-    const [departments, setdepartments] = useState<Department[]>([])
-    const [departmentDialog, setdepartmentDialog] = useState<boolean>(false)
-    const [department, setdepartment] = useState<Department>({
-        id: null,
-        description: "",
-    })
+    const [departments, setDepartments] = useState<Department[]>([])
+    const [departmentDialog, setDepartmentDialog] = useState<boolean>(false)
+    const [department, setDepartment] = useState<Department>({ id: "", description: "" })
     const [submitted, setSubmitted] = useState<boolean>(false)
+
+    const [permissionsDialog, setPermissionsDialog] = useState<boolean>(false)
+    const [allPermissions, setAllPermissions] = useState<Permission[]>([])
+    const [departmentPermissions, setDepartmentPermissions] = useState<string[]>([])
+    const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>("")
+
     const toast = useRef<Toast>(null)
 
     useEffect(() => {
-        fetchdepartments()
-        setLoading(false)
+        fetchDepartments()
     }, [])
 
-    const fetchdepartments = async () => {
+    const fetchDepartments = async () => {
         try {
             const response = await fetch("/api/departments")
-            const data = await response.json()
-            setdepartments(data)
+            const data: Department[] = await response.json()
+            setDepartments(data)
         } catch (error) {
             console.error("Erro ao buscar Departamentos:", error)
             toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar Departamentos", life: 3000 })
+        } finally {
+            setLoading(false)
         }
     }
 
-    const leftToolbarTemplate = () => {
-        return (
-            <div className="flex justify-between w-full">
-                <Button label="Novo" icon="pi pi-user-plus" className="p-button-success" onClick={openNew} />
-            </div>
-        )
-    }
-
-    const rightToolbarTemplate = () => {
-        return (
-            <div className="flex justify-between w-full">
-                <InputText id="code" placeholder="Pesquisar" className="ml-2" />
-            </div>
-        )
-    }
-
-    const openNew = () => {
-        setdepartment({ id: null, description: "" })
+    const handleNewDepartment = () => {
+        setDepartment({ id: "", description: "" })
         setSubmitted(false)
-        setdepartmentDialog(true)
+        setDepartmentDialog(true)
     }
 
-    const hideDialog = () => {
-        setSubmitted(false)
-        setdepartmentDialog(false)
+    const handleEditDepartment = (department: Department) => {
+        setDepartment(department)
+        setDepartmentDialog(true)
     }
 
-    const savedepartment = async () => {
+    const renderPermissionSwitch = (permissionId: string) => {
+        const isAssigned = departmentPermissions.includes(permissionId)
+
+        return <InputSwitch checked={isAssigned} onChange={(e) => handlePermissionToggle(permissionId, e.value)} />
+    }
+
+    const fetchPermissions = async (departmentId: SetStateAction<string>) => {
+        try {
+            const [allPermissionsRes, departmentPermissionsRes] = await Promise.all([
+                fetch("/api/permissions"),
+                fetch(`/api/departments/permissions/${departmentId}`),
+            ])
+
+            const allPermissionsData = await allPermissionsRes.json()
+            const departmentPermissionsData = await departmentPermissionsRes.json()
+
+            setAllPermissions(allPermissionsData)
+            setDepartmentPermissions(departmentPermissionsData.map((perm: { id: string }) => perm.id))
+            setPermissionsDialog(true)
+        } catch (error) {
+            console.error("Erro ao buscar permissões:", error)
+            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar permissões", life: 3000 })
+        }
+    }
+
+    const openPermissionsDialog = (departmentId: Department) => {
+        setSelectedDepartmentId(departmentId.id)
+        fetchPermissions(departmentId.id)
+    }
+
+    const saveDepartment = async () => {
         setSubmitted(true)
-
         if (department.description.trim()) {
-            let _departments = [...departments]
             try {
-                console.log("Payload enviado:", JSON.stringify(department))
-
-                const isUpdating = !!department.id
-                const response = await fetch(isUpdating ? `/api/departments/${department.id}` : "/api/departments", {
-                    method: isUpdating ? "PUT" : "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
+                const method = department.id ? "PUT" : "POST"
+                const url = department.id ? `/api/departments/${department.id}` : "/api/departments"
+                const response = await fetch(url, {
+                    method,
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ description: department.description }),
                 })
 
-                if (!response.ok) {
-                    const errorData = await response.json()
-                    const errorMessage = errorData.error || "Erro ao salvar Departamento"
-                    throw new Error(errorMessage)
-                }
+                if (!response.ok) throw new Error("Erro ao salvar Departamento")
 
-                const result = await response.json()
-                if (!isUpdating) {
-                    _departments.push(result)
-                } else {
-                    _departments[_departments.findIndex((g) => g.id === department.id)] = department
-                }
+                const updatedDepartment = await response.json()
+                setDepartments((prev) =>
+                    department.id ? prev.map((dep) => (dep.id === department.id ? updatedDepartment : dep)) : [...prev, updatedDepartment]
+                )
 
                 toast.current?.show({
                     severity: "success",
                     summary: "Sucesso",
-                    detail: isUpdating ? "Departamento atualizado com sucesso" : "Departamento criado com sucesso",
+                    detail: department.id ? "Departamento atualizado" : "Departamento criado",
                     life: 3000,
                 })
-                setdepartments(_departments)
-                setdepartmentDialog(false)
-                setdepartment({ id: null, description: "" })
+
+                setDepartmentDialog(false)
+                setDepartment({ id: "", description: "" })
             } catch (error) {
                 console.error("Erro ao salvar Departamento:", error)
-                const errorMessage = error instanceof Error ? error.message : "Erro desconhecido ao salvar Departamento"
-                toast.current?.show({ severity: "error", summary: "Erro", detail: errorMessage, life: 4000 })
+                toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao salvar Departamento", life: 4000 })
             }
         } else {
-            toast.current?.show({
-                severity: "warn",
-                summary: "Atenção",
-                detail: "Preencha todos os campos obrigatórios.",
-                life: 3000,
-            })
+            toast.current?.show({ severity: "warn", summary: "Atenção", detail: "Preencha todos os campos obrigatórios.", life: 3000 })
         }
     }
 
-    const editdepartment = (department: Department) => {
-        setdepartment({ ...department })
-        setdepartmentDialog(true)
-    }
-
-    const deletedepartment = async (department: Department) => {
+    const deleteDepartment = async (department: Department) => {
         try {
-            const response = await fetch(`/api/departments/${department.id}`, {
-                method: "DELETE",
-            })
+            const response = await fetch(`/api/departments/${department.id}`, { method: "DELETE" })
+            if (!response.ok) throw new Error("Erro ao deletar Departamento")
 
-            if (response.ok) {
-                let _departments = departments.filter((val) => val.id !== department.id)
-                setdepartments(_departments)
-                toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Departamento deletado com sucesso", life: 3000 })
-            } else {
-                throw new Error("Erro ao deletar Departamento")
-            }
+            setDepartments((prev) => prev.filter((dep) => dep.id !== department.id))
+            toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Departamento deletado com sucesso", life: 3000 })
         } catch (error) {
             console.error("Erro ao deletar Departamento:", error)
             toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao deletar Departamento", life: 3000 })
         }
     }
 
+    const handlePermissionToggle = async (permissionId: string, isChecked: boolean) => {
+        try {
+            const method = isChecked ? "POST" : "DELETE"
+            const response = await fetch(`/api/departments/permissions`, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ departmentId: selectedDepartmentId, permissionId }),
+            })
+
+            if (!response.ok) throw new Error("Erro ao atualizar permissão")
+
+            setDepartmentPermissions((prev) => (isChecked ? [...prev, permissionId] : prev.filter((id) => id !== permissionId)))
+
+            toast.current?.show({
+                severity: "success",
+                summary: "Sucesso",
+                detail: `Permissão ${isChecked ? "adicionada" : "removida"} com sucesso`,
+                life: 3000,
+            })
+        } catch (error) {
+            console.error("Erro ao atualizar permissão:", error)
+            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao atualizar permissão", life: 3000 })
+        }
+    }
+
     const departmentDialogFooter = (
         <>
-            <Button label="Cancelar" icon="pi pi-times" className="p-button-danger" onClick={hideDialog} />
-            <Button label="Salvar" icon="pi pi-check" className="p-button-success" onClick={savedepartment} />
+            <Button label="Cancelar" icon="pi pi-times" className="p-button-danger" onClick={() => setDepartmentDialog(false)} />
+            <Button label="Salvar" icon="pi pi-check" className="p-button-success" onClick={saveDepartment} />
+        </>
+    )
+
+    const permissionsDialogFooter = (
+        <>
+            <Button label="Fechar" icon="pi pi-times" className="p-button-danger" onClick={() => setPermissionsDialog(false)} />
         </>
     )
 
@@ -175,54 +202,54 @@ export default function Departments() {
             <Navbar />
             <Toast ref={toast} />
             <div className="card">
-                <Toolbar className="p-mb-4 p-toolbar" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
+                <Toolbar
+                    className="p-mb-4 p-toolbar"
+                    left={() => <Button label="Novo" icon="pi pi-user-plus" className="p-button-success" onClick={handleNewDepartment} />}
+                    right={() => <InputText id="code" placeholder="Pesquisar" className="ml-2" />}
+                />
                 <DataTable
                     header="Departamentos"
-                    style={{
-                        width: "100%",
-                        overflow: "auto",
-                        border: "1px solid #ccc",
-                    }}
                     value={departments}
                     paginator
                     rows={7}
                     rowsPerPageOptions={[7, 10, 25, 50]}
+                    style={{ width: "100%", overflow: "auto", border: "1px solid #ccc" }}
                 >
-                    <Column align="center" field="description" header="Descrição" sortable></Column>
+                    <Column align="center" field="description" header="Descrição" sortable />
                     <Column
                         align="center"
                         field="createdAt"
                         header="Data de Criação"
-                        body={(rowData) => {
-                            const date = new Date(rowData.createdAt)
-                            return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
-                        }}
+                        body={({ createdAt }) => new Date(createdAt!).toLocaleDateString()}
                         sortable
-                    ></Column>
+                    />
                     <Column
                         align="center"
                         field="updatedAt"
                         header="Data de Atualização"
-                        body={(rowData) => {
-                            const date = new Date(rowData.updatedAt)
-                            return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
-                        }}
+                        body={({ updatedAt }) => new Date(updatedAt!).toLocaleDateString()}
                         sortable
-                    ></Column>
+                    />
                     <Column
                         align="center"
                         body={(rowData: Department) => (
-                            <>
-                                <div style={{ display: "flex", flexWrap: "nowrap" }}>
-                                    <Button icon="pi pi-pencil" className="p-button-rounded p-button-success mr-2" onClick={() => editdepartment(rowData)} />
-                                    <DeleteButton
-                                        item={rowData}
-                                        onDelete={deletedepartment}
-                                        message={`Você tem certeza que deseja deletar o Departamento ${rowData.description}?`}
-                                        header="Confirmação"
-                                    />
-                                </div>
-                            </>
+                            <div style={{ display: "flex", flexWrap: "nowrap" }}>
+                                <Button icon="pi pi-pencil" className="p-button-rounded p-button-success mr-2" onClick={() => handleEditDepartment(rowData)} />
+                                <Button
+                                    icon="pi pi-lock"
+                                    style={{
+                                        marginLeft: "15px",
+                                    }}
+                                    className="p-button-rounded p-button-info ml-2"
+                                    onClick={() => openPermissionsDialog(rowData)}
+                                />
+                                <DeleteButton
+                                    item={rowData}
+                                    onDelete={deleteDepartment}
+                                    message={`Você tem certeza que deseja deletar o Departamento ${rowData.description}?`}
+                                    header="Confirmação"
+                                />
+                            </div>
                         )}
                     />
                 </DataTable>
@@ -230,31 +257,54 @@ export default function Departments() {
                 <Dialog
                     visible={departmentDialog}
                     style={{ width: "450px" }}
-                    header="Detalhes do Departamento"
-                    draggable={false}
+                    header={department.id ? "Editar Departamento" : "Novo Departamento"}
                     modal
-                    className="p-fluid"
+                    onHide={() => setDepartmentDialog(false)}
                     footer={departmentDialogFooter}
-                    onHide={hideDialog}
                 >
-                    <div
-                        className="field"
-                        style={{
-                            marginTop: "10px",
-                        }}
-                    >
-                        <label htmlFor="description">Descrição</label>
-                        <InputText
-                            id="description"
-                            value={department.description}
-                            onChange={(e) => setdepartment({ ...department, description: e.target.value })}
-                            style={{
-                                marginTop: "10px",
-                            }}
-                            required
-                            className={submitted && !department.description ? "p-invalid" : ""}
-                        />
+                    <div className="p-fluid">
+                        <div className="field">
+                            <label htmlFor="description">Descrição</label>
+                            <InputText
+                                id="description"
+                                value={department.description}
+                                onChange={(e) => setDepartment((prev) => ({ ...prev, description: e.target.value }))}
+                                required
+                                autoFocus
+                                className={submitted && !department.description.trim() ? "p-invalid" : ""}
+                            />
+                        </div>
                     </div>
+                </Dialog>
+
+                <Dialog
+                    visible={permissionsDialog}
+                    style={{ width: "1000px" }}
+                    header="Gerenciar Permissões"
+                    modal
+                    draggable={false}
+                    onHide={() => setPermissionsDialog(false)}
+                    footer={permissionsDialogFooter}
+                >
+                    <DataTable value={allPermissions} header="Permissões" style={{ width: "100%" }}>
+                        <Column align="center" field="route" header="Rota" sortable></Column>
+                        <Column align="center" field="description" header="Descrição" sortable></Column>
+                        <Column
+                            align="center"
+                            field="createdAt"
+                            header="Data de Criação"
+                            body={({ createdAt }) => new Date(createdAt!).toLocaleDateString()}
+                            sortable
+                        />
+                        <Column
+                            align="center"
+                            field="updatedAt"
+                            header="Data de Atualização"
+                            body={({ updatedAt }) => new Date(updatedAt!).toLocaleDateString()}
+                            sortable
+                        />
+                        <Column header="Habilitar" body={(rowData) => renderPermissionSwitch(rowData.id)} />
+                    </DataTable>
                 </Dialog>
                 <ConfirmDialog />
             </div>

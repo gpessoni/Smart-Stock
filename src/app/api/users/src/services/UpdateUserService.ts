@@ -31,6 +31,18 @@ export async function updateUserService(id: string, body: any) {
     const updatedUser = await prisma.users.update({
       where: { id },
       data: updatedData,
+      select: {
+        id: true,
+        username: true,
+        department: {
+          select: {
+            id: true,
+            description: true,
+          },
+        },
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     return NextResponse.json(updatedUser, { status: HttpStatus.OK });
