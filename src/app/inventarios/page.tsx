@@ -9,7 +9,6 @@ import { ConfirmDialog } from "primereact/confirmdialog"
 import { DataTable } from "primereact/datatable"
 import { Dialog } from "primereact/dialog"
 import { Dropdown } from "primereact/dropdown"
-import { InputText } from "primereact/inputtext"
 import "primereact/resources/themes/lara-light-cyan/theme.css"
 import { Skeleton } from "primereact/skeleton"
 import { Toast } from "primereact/toast"
@@ -41,6 +40,8 @@ type DropdownOption = {
 export default function Inventories() {
     const [loading, setLoading] = useState<boolean>(true)
     const [inventories, setInventories] = useState<Inventory[]>([])
+
+    const [visible, setVisible] = useState(false)
     const [inventoryDialog, setInventoryDialog] = useState<boolean>(false)
     const [inventory, setInventory] = useState<Inventory>({
         id: "",
@@ -60,16 +61,23 @@ export default function Inventories() {
     })
     const [submitted, setSubmitted] = useState<boolean>(false)
     const [productOptions, setProductOptions] = useState<DropdownOption[]>([])
+    const [storageOptions, setStorageOptions] = useState<DropdownOption[]>([])
     const [storageAddressOptions, setStorageAddressOptions] = useState<DropdownOption[]>([])
+    const [selectedStorageId, setSelectedStorageId] = useState<string | null>(null)
 
-    const [visible, setVisible] = useState(false)
     const toast = useRef<Toast>(null)
 
     useEffect(() => {
         fetchInventories()
-        fetchDropdownOptions()
+        fetchProductOptions()
+        fetchStorageOptions()
         setLoading(false)
     }, [])
+
+    const onRowSelect = (e: any) => {
+        setInventory(e.data)
+        setInventoryDialog(true)
+    }
 
     const fetchInventories = async () => {
         try {
@@ -82,42 +90,40 @@ export default function Inventories() {
         }
     }
 
-    const fetchDropdownOptions = async () => {
+    const fetchProductOptions = async () => {
         try {
-            const [products, storageAddresses] = await Promise.all([
-                fetch("/api/products").then((res) => res.json()),
-                fetch("/api/addresses").then((res) => res.json()),
-            ])
-
+            const products = await fetch("/api/products").then((res) => res.json())
             setProductOptions(products.map((p: any) => ({ label: p.description, value: p.id })))
-            setStorageAddressOptions(storageAddresses.map((sa: any) => ({ label: sa.address, value: sa.id })))
         } catch (error) {
-            console.error("Erro ao buscar opções de dropdown:", error)
-            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar opções", life: 3000 })
+            console.error("Erro ao buscar produtos:", error)
+            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar produtos", life: 3000 })
         }
     }
 
-    const leftToolbarTemplate = () => {
-        return (
-            <div className="flex justify-between w-full">
-                <Button label="Novo Inventário" icon="pi pi-plus" className="p-button-success" onClick={openNew} />
-            </div>
-        )
+    const fetchStorageOptions = async () => {
+        try {
+            const storages = await fetch("/api/storages").then((res) => res.json())
+            setStorageOptions(storages.map((s: any) => ({ label: s.description, value: s.id })))
+        } catch (error) {
+            console.error("Erro ao buscar armazéns:", error)
+            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar armazéns", life: 3000 })
+        }
     }
 
-    const rightToolbarTemplate = () => {
-        return (
-            <div className="flex justify-between w-full">
-                <Button
-                    label="Processar Inventários"
-                    icon="pi pi-check"
-                    className="p-button-info"
-                    onClick={() => {
-                        setVisible(true)
-                    }}
-                />
-            </div>
-        )
+    const fetchStorageAddressOptions = async (storageId: string) => {
+        try {
+            const storage = await fetch(`/api/storages/${storageId}`).then((res) => res.json())
+            setStorageAddressOptions(storage.StorageAddress.map((sa: any) => ({ label: sa.address, value: sa.id })))
+        } catch (error) {
+            console.error("Erro ao buscar endereços:", error)
+            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar endereços", life: 3000 })
+        }
+    }
+
+    const handleStorageChange = (e: any) => {
+        const storageId = e.value
+        setSelectedStorageId(storageId)
+        fetchStorageAddressOptions(storageId)
     }
 
     const openNew = () => {
@@ -224,6 +230,29 @@ export default function Inventories() {
         }
     }
 
+    const leftToolbarTemplate = () => {
+        return (
+            <div className="flex justify-between w-full">
+                <Button label="Novo Inventário" icon="pi pi-plus" className="p-button-success" onClick={openNew} />
+            </div>
+        )
+    }
+
+    const rightToolbarTemplate = () => {
+        return (
+            <div className="flex justify-between w-full">
+                <Button
+                    label="Processar Inventários"
+                    icon="pi pi-check"
+                    className="p-button-info"
+                    onClick={() => {
+                        setVisible(true)
+                    }}
+                />
+            </div>
+        )
+    }
+
     const editInventory = (inventory: Inventory) => {
         setInventory({ ...inventory })
         setInventoryDialog(true)
@@ -274,11 +303,6 @@ export default function Inventories() {
         </>
     )
 
-    const onRowSelect = (e: any) => {
-        setInventory(e.data)
-        setInventoryDialog(true)
-    }
-
     const statusBodyTemplate = (rowData: Inventory) => {
         const statusLabel = rowData.status === "PROCESSED" ? "Processado" : "Não Processado"
         return <span className={`p-tag p-tag-${rowData.status === "PROCESSED" ? "success" : "warning"}`}>{statusLabel}</span>
@@ -295,12 +319,12 @@ export default function Inventories() {
                     {loading ? (
                         <Skeleton />
                     ) : (
-                        <DataTable value={inventories} paginator rows={10} className="datatable-custom" onRowSelect={onRowSelect}>
-                            <Column field="product.code" header="Código do Produto" />
-                            <Column field="product.description" header="Descrição do Produto" />
-                            <Column field="storageAddress.address" header="Endereço" />
-                            <Column field="quantity" header="Quantidade" />
-                            <Column field="status" header="Status" body={statusBodyTemplate} />
+                        <DataTable value={inventories} paginator rows={10} className="datatable-responsive">
+                            <Column field="product.code" header="Código" sortable />
+                            <Column field="product.description" header="Descrição" sortable />
+                            <Column field="storageAddress.address" header="Endereço" sortable />
+                            <Column field="quantity" header="Quantidade" sortable />
+                            <Column field="status" header="Status" body={statusBodyTemplate} sortable />
                             <Column
                                 body={(rowData: Inventory) => (
                                     <>
@@ -325,61 +349,90 @@ export default function Inventories() {
                             />
                         </DataTable>
                     )}
-                    <Dialog
-                        className="p-fluid"
-                        visible={inventoryDialog}
-                        style={{ width: "450px" }}
-                        header="Inventário"
-                        modal
-                        footer={inventoryDialogFooter}
-                        onHide={hideDialog}
-                    >
+                </div>
+
+                <Dialog
+                    visible={inventoryDialog}
+                    style={{ width: "450px" }}
+                    header="Detalhes do Inventário"
+                    modal
+                    className="p-fluid"
+                    footer={inventoryDialogFooter}
+                    onHide={hideDialog}
+                >
+                    <div className="field" style={{ marginBottom: "1.5rem" }}>
+                        {" "}
+                        <label htmlFor="productId">Produto</label>
+                        <Dropdown
+                            id="productId"
+                            value={inventory.productId}
+                            options={productOptions}
+                            onChange={(e) => setInventory({ ...inventory, productId: e.value })}
+                            placeholder="Selecione um produto"
+                        />
+                        {submitted && !inventory.productId && <small className="p-invalid">Produto é obrigatório.</small>}
+                    </div>
+
+                    <div className="field" style={{ marginBottom: "1.5rem" }}>
+                        {" "}
+                        <label htmlFor="storageId">Armazém</label>
+                        <Dropdown
+                            id="storageId"
+                            value={selectedStorageId}
+                            options={storageOptions}
+                            onChange={handleStorageChange}
+                            placeholder="Selecione um armazém"
+                        />
+                        {submitted && !selectedStorageId && <small className="p-invalid">Armazém é obrigatório.</small>}
+                    </div>
+
+                    {selectedStorageId && (
                         <div className="field" style={{ marginBottom: "1.5rem" }}>
-                            <label htmlFor="product">Produto</label>
+                            {" "}
+                            <label htmlFor="storageAddressId">Endereço</label>
                             <Dropdown
-                                id="product"
-                                value={inventory.productId}
-                                options={productOptions}
-                                onChange={(e) => setInventory({ ...inventory, productId: e.value })}
-                                placeholder="Selecione um produto"
-                            />
-                        </div>
-                        <div className="field" style={{ marginBottom: "1.5rem" }}>
-                            <label htmlFor="storageAddress">Endereço</label>
-                            <Dropdown
-                                id="storageAddress"
+                                filter={true}
+                                emptyFilterMessage="Endereço não encontrado"
+                                emptyMessage="Sem endereços para o Armazém Selecionado"
+                                id="storageAddressId"
                                 value={inventory.storageAddressId}
                                 options={storageAddressOptions}
                                 onChange={(e) => setInventory({ ...inventory, storageAddressId: e.value })}
                                 placeholder="Selecione um endereço"
                             />
+                            {submitted && !inventory.storageAddressId && <small className="p-invalid">Endereço é obrigatório.</small>}
                         </div>
-                        <div className="field">
-                            <label htmlFor="quantity">Quantidade</label>
-                            <InputText
-                                id="quantity"
-                                type="number"
-                                value={inventory.quantity.toString()}
-                                onChange={(e) => setInventory({ ...inventory, quantity: Number(e.target.value) })}
-                            />
-                        </div>
-                    </Dialog>
-                    <ConfirmDialog
-                        draggable={false}
-                        visible={visible}
-                        accept={processInventories}
-                        icon="pi pi-exclamation-triangle"
-                        acceptClassName="p-button-danger"
-                        acceptLabel="Sim"
-                        rejectClassName="p-button-secondary"
-                        rejectLabel="Não"
-                        onHide={() => {
-                            setVisible(false)
-                        }}
-                        header="Atenção"
-                        message="Deseja processar o inventário? Após processado não será possível estornar o saldo"
-                    />
-                </div>
+                    )}
+
+                    <div className="field">
+                        <label htmlFor="quantity">Quantidade</label>
+                        <input
+                            id="quantity"
+                            type="number"
+                            value={inventory.quantity}
+                            onChange={(e) => setInventory({ ...inventory, quantity: parseInt(e.target.value) })}
+                            placeholder="Digite a quantidade"
+                            className={`p-inputtext p-component ${submitted && inventory.quantity <= 0 ? "p-invalid" : ""}`}
+                        />
+                        {submitted && inventory.quantity <= 0 && <small className="p-invalid">Quantidade deve ser maior que zero.</small>}
+                    </div>
+                </Dialog>
+
+                <ConfirmDialog
+                    draggable={false}
+                    visible={visible}
+                    accept={processInventories}
+                    icon="pi pi-exclamation-triangle"
+                    acceptClassName="p-button-danger"
+                    acceptLabel="Sim"
+                    rejectClassName="p-button-secondary"
+                    rejectLabel="Não"
+                    onHide={() => {
+                        setVisible(false)
+                    }}
+                    header="Atenção"
+                    message="Deseja processar o inventário? Após processado não será possível estornar o saldo"
+                />
             </div>
         </>
     )

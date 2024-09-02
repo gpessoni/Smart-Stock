@@ -58,7 +58,7 @@ const Navbar = () => {
                 </S.MenuIcon>
             ) : (
                 <S.NavLinks>
-                    <S.NavLink href="/estoques">Inventários</S.NavLink>
+                    <S.NavLink href="/inventarios">Inventários</S.NavLink>
                     <S.NavLink href="/produtos">Produtos</S.NavLink>
                     <S.NavLink href="/estoques">Solicitações ao Almoxarifado</S.NavLink>
                     <S.NavLink href="/estoques">Ordens de Separação</S.NavLink>
