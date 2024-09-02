@@ -58,13 +58,10 @@ const Navbar = () => {
                 </S.MenuIcon>
             ) : (
                 <S.NavLinks>
-                    <S.NavLink href="/">Dashboard</S.NavLink>
-                    <S.NavLink href="/produtos">Produtos</S.NavLink>
-                    <S.NavLink href="/estoques">Solicitações</S.NavLink>
-                    <S.NavLink href="/estoques">Separações</S.NavLink>
                     <S.NavLink href="/estoques">Inventários</S.NavLink>
-                    <S.NavLink href="/fornecedores">Fornecedores</S.NavLink>
-                    <S.NavLink href="/relatorios">Relatórios</S.NavLink>
+                    <S.NavLink href="/produtos">Produtos</S.NavLink>
+                    <S.NavLink href="/estoques">Solicitações ao Almoxarifado</S.NavLink>
+                    <S.NavLink href="/estoques">Ordens de Separação</S.NavLink>
                 </S.NavLinks>
             )}
 

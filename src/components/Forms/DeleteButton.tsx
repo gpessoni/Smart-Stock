@@ -9,9 +9,10 @@ interface DeleteButtonProps {
     onDelete: (item: any) => void
     message: string
     header: string
+    disabled?: boolean
 }
 
-const DeleteButton: React.FC<DeleteButtonProps> = ({ item, onDelete, message, header }) => {
+const DeleteButton: React.FC<DeleteButtonProps> = ({ item, onDelete, message, header, disabled }) => {
     const confirmDelete = () => {
         confirmDialog({
             message,
@@ -25,7 +26,7 @@ const DeleteButton: React.FC<DeleteButtonProps> = ({ item, onDelete, message, he
         })
     }
 
-    return <StyledButton icon="pi pi-trash" className="p-button-rounded p-button-danger" onClick={confirmDelete} />
+    return <StyledButton disabled={disabled} icon="pi pi-trash" className="p-button-rounded p-button-danger" onClick={confirmDelete} />
 }
 
 const StyledButton = styled(Button)`
