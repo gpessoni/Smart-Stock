@@ -13,6 +13,11 @@ export async function listProductsService() {
                     include: {
                         storageAddress: true,
                     },
+                    where: {
+                        balance: {
+                            gt: 0,
+                        },
+                    },
                 },
             },
         })
