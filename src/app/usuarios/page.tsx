@@ -36,7 +36,7 @@ type User = {
 export default function Users() {
     const [loading, setLoading] = useState<boolean>(true)
     const [users, setUsers] = useState<User[]>([])
-    const [departments, setDepartments] = useState<Department[]>([]) // Novo estado para armazenar os departamentos
+    const [departments, setDepartments] = useState<Department[]>([])
     const [userDialog, setUserDialog] = useState<boolean>(false)
     const [user, setUser] = useState<User>({
         id: "",

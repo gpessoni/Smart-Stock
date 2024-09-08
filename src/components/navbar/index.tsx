@@ -42,6 +42,37 @@ const Navbar = () => {
         }
     }, [])
 
+    React.useEffect(() => {
+        const checkTokenValidity = async () => {
+            try {
+                const response = await fetch("/api/users/auth", {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                        method: "GET",
+                    },
+                })
+
+                const data = await response.json()
+                console.log(data.valid)
+
+                if (!data.valid) {
+                    window.location.href = "/"
+                }
+            } catch (error) {
+                console.error("Erro ao verificar token:", error)
+                window.location.href = "/"
+            }
+        }
+
+        checkTokenValidity()
+
+        checkWindowSize()
+        window.addEventListener("resize", checkWindowSize)
+        return () => {
+            window.removeEventListener("resize", checkWindowSize)
+        }
+    }, [])
+
     return (
         <S.Navbar>
             <S.Logo>

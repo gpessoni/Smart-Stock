@@ -17,7 +17,7 @@ export default function Home() {
 
     const handleLogin = async () => {
         try {
-            const response = await fetch("http://localhost:3000/api/users/auth", {
+            const response = await fetch("/api/users/auth", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
