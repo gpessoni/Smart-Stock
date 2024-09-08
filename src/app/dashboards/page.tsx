@@ -62,12 +62,28 @@ export default function Dashboard() {
         fetchData()
     }, [])
 
+    const getAuthToken = () => {
+        return localStorage.getItem("authToken") || ""
+    }
+
     const fetchData = async () => {
         try {
             const [productsRes, transferRes, inventoryRes] = await Promise.all([
-                fetch("/api/products"),
-                fetch("/api/address-transfer"),
-                fetch("/api/product-inventory"),
+                fetch("/api/products", {
+                    headers: {
+                        Authorization: `Bearer ${getAuthToken()}`,
+                    },
+                }),
+                fetch("/api/address-transfer", {
+                    headers: {
+                        Authorization: `Bearer ${getAuthToken()}`,
+                    },
+                }),
+                fetch("/api/product-inventory", {
+                    headers: {
+                        Authorization: `Bearer ${getAuthToken()}`,
+                    },
+                }),
             ])
 
             const productsData: Product[] = await productsRes.json()

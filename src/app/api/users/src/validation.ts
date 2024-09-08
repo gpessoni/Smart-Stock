@@ -12,7 +12,7 @@ export const createUserValidation = Joi.object({
         "string.empty": "Senha não pode ser vazia",
         "string.min": "Senha deve ter pelo menos {#limit} caracteres",
     }),
-    userId: Joi.string().uuid().required().messages({
+    departmentId: Joi.string().uuid().required().messages({
         "any.required": "Departamento é obrigatório",
         "string.empty": "Departamento não pode ser vazio",
     }),
@@ -28,7 +28,7 @@ export const updateUserValidation = Joi.object({
     password: Joi.string().min(8).messages({
         "string.min": "Senha deve ter pelo menos {#limit} caracteres",
     }),
-    userId: Joi.string().uuid().messages({
+    departmentId: Joi.string().uuid().messages({
         "string.empty": "Departamento não pode ser vazio",
     }),
 })

@@ -1,21 +1,21 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { Skeleton } from "primereact/skeleton"
-import { DataTable } from "primereact/datatable"
-import { Button } from "primereact/button"
-import { Dialog } from "primereact/dialog"
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog"
-import { InputText } from "primereact/inputtext"
-import { Toast } from "primereact/toast"
-import { Dropdown } from "primereact/dropdown"
-import Navbar from "@/components/Navbar"
-import styles from "./../page.module.css"
-import { Column } from "primereact/column"
-import "primereact/resources/themes/lara-light-cyan/theme.css"
-import "primeicons/primeicons.css"
-import { Toolbar } from "primereact/toolbar"
 import DeleteButton from "@/components/Forms/DeleteButton"
+import Navbar from "@/components/Navbar"
+import "primeicons/primeicons.css"
+import { Button } from "primereact/button"
+import { Column } from "primereact/column"
+import { ConfirmDialog } from "primereact/confirmdialog"
+import { DataTable } from "primereact/datatable"
+import { Dialog } from "primereact/dialog"
+import { Dropdown } from "primereact/dropdown"
+import { InputText } from "primereact/inputtext"
+import "primereact/resources/themes/lara-light-cyan/theme.css"
+import { Skeleton } from "primereact/skeleton"
+import { Toast } from "primereact/toast"
+import { Toolbar } from "primereact/toolbar"
+import { useEffect, useRef, useState } from "react"
+import styles from "./../page.module.css"
 
 type Product = {
     id: string | null
@@ -55,6 +55,10 @@ export default function Products() {
     const [visible, setVisible] = useState(false)
     const toast = useRef<Toast>(null)
 
+    const getAuthToken = () => {
+        return localStorage.getItem("authToken") || ""
+    }
+
     useEffect(() => {
         fetchProducts()
         fetchDropdownOptions()
@@ -63,7 +67,11 @@ export default function Products() {
 
     const fetchProducts = async () => {
         try {
-            const response = await fetch("/api/products")
+            const response = await fetch("/api/products", {
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
+            })
             const data = await response.json()
             setProducts(data)
         } catch (error) {
@@ -75,9 +83,21 @@ export default function Products() {
     const fetchDropdownOptions = async () => {
         try {
             const [typeProducts, groupProducts, unitMeasures] = await Promise.all([
-                fetch("/api/product-types").then((res) => res.json()),
-                fetch("/api/product-groups").then((res) => res.json()),
-                fetch("/api/unit-measure").then((res) => res.json()),
+                fetch("/api/product-types", {
+                    headers: {
+                        Authorization: `Bearer ${getAuthToken()}`,
+                    },
+                }).then((res) => res.json()),
+                fetch("/api/product-groups", {
+                    headers: {
+                        Authorization: `Bearer ${getAuthToken()}`,
+                    },
+                }).then((res) => res.json()),
+                fetch("/api/unit-measure", {
+                    headers: {
+                        Authorization: `Bearer ${getAuthToken()}`,
+                    },
+                }).then((res) => res.json()),
             ])
 
             setTypeProductOptions(typeProducts.map((tp: any) => ({ label: tp.description, value: tp.id })))
@@ -129,6 +149,7 @@ export default function Products() {
                     method: isUpdating ? "PATCH" : "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        Authorization: `Bearer ${getAuthToken()}`,
                     },
                     body: JSON.stringify({
                         code: product.code,
@@ -201,6 +222,9 @@ export default function Products() {
         try {
             const response = await fetch(`/api/products/${product.id}`, {
                 method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
             })
 
             if (response.ok) {

@@ -43,18 +43,31 @@ export default function Departments() {
 
     const toast = useRef<Toast>(null)
 
+    const getAuthToken = () => {
+        return localStorage.getItem("authToken") || ""
+    }
+
     useEffect(() => {
         fetchDepartments()
     }, [])
 
     const fetchDepartments = async () => {
         try {
-            const response = await fetch("/api/departments")
+            const response = await fetch("/api/departments", {
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
+            })
             const data: Department[] = await response.json()
             setDepartments(data)
         } catch (error) {
             console.error("Erro ao buscar Departamentos:", error)
-            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar Departamentos", life: 3000 })
+            toast.current?.show({
+                severity: "error",
+                summary: "Erro",
+                detail: "Erro ao buscar Departamentos",
+                life: 3000,
+            })
         } finally {
             setLoading(false)
         }
@@ -80,8 +93,16 @@ export default function Departments() {
     const fetchPermissions = async (departmentId: SetStateAction<string>) => {
         try {
             const [allPermissionsRes, departmentPermissionsRes] = await Promise.all([
-                fetch("/api/permissions"),
-                fetch(`/api/departments/permissions/${departmentId}`),
+                fetch("/api/permissions", {
+                    headers: {
+                        Authorization: `Bearer ${getAuthToken()}`,
+                    },
+                }),
+                fetch(`/api/departments/permissions/${departmentId}`, {
+                    headers: {
+                        Authorization: `Bearer ${getAuthToken()}`,
+                    },
+                }),
             ])
 
             const allPermissionsData = await allPermissionsRes.json()
@@ -92,7 +113,12 @@ export default function Departments() {
             setPermissionsDialog(true)
         } catch (error) {
             console.error("Erro ao buscar permissões:", error)
-            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar permissões", life: 3000 })
+            toast.current?.show({
+                severity: "error",
+                summary: "Erro",
+                detail: "Erro ao buscar permissões",
+                life: 3000,
+            })
         }
     }
 
@@ -109,7 +135,10 @@ export default function Departments() {
                 const url = department.id ? `/api/departments/${department.id}` : "/api/departments"
                 const response = await fetch(url, {
                     method,
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${getAuthToken()}`,
+                    },
                     body: JSON.stringify({ description: department.description }),
                 })
 
@@ -131,23 +160,48 @@ export default function Departments() {
                 setDepartment({ id: "", description: "" })
             } catch (error) {
                 console.error("Erro ao salvar Departamento:", error)
-                toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao salvar Departamento", life: 4000 })
+                toast.current?.show({
+                    severity: "error",
+                    summary: "Erro",
+                    detail: "Erro ao salvar Departamento",
+                    life: 4000,
+                })
             }
         } else {
-            toast.current?.show({ severity: "warn", summary: "Atenção", detail: "Preencha todos os campos obrigatórios.", life: 3000 })
+            toast.current?.show({
+                severity: "warn",
+                summary: "Atenção",
+                detail: "Preencha todos os campos obrigatórios.",
+                life: 3000,
+            })
         }
     }
 
     const deleteDepartment = async (department: Department) => {
         try {
-            const response = await fetch(`/api/departments/${department.id}`, { method: "DELETE" })
+            const response = await fetch(`/api/departments/${department.id}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
+            })
             if (!response.ok) throw new Error("Erro ao deletar Departamento")
 
             setDepartments((prev) => prev.filter((dep) => dep.id !== department.id))
-            toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Departamento deletado com sucesso", life: 3000 })
+            toast.current?.show({
+                severity: "success",
+                summary: "Sucesso",
+                detail: "Departamento deletado com sucesso",
+                life: 3000,
+            })
         } catch (error) {
             console.error("Erro ao deletar Departamento:", error)
-            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao deletar Departamento", life: 3000 })
+            toast.current?.show({
+                severity: "error",
+                summary: "Erro",
+                detail: "Erro ao deletar Departamento",
+                life: 3000,
+            })
         }
     }
 
@@ -156,7 +210,7 @@ export default function Departments() {
             const method = isChecked ? "POST" : "DELETE"
             const response = await fetch(`/api/departments/permissions`, {
                 method,
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${getAuthToken()}` },
                 body: JSON.stringify({ departmentId: selectedDepartmentId, permissionId }),
             })
 

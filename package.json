@@ -15,8 +15,10 @@
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@prisma/client": "^5.17.0",
     "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "chart.js": "^4.4.4",
     "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
     "next": "14.2.5",
     "primeflex": "^3.3.1",
     "primeicons": "^7.0.0",
@@ -28,6 +30,7 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.14.14",
     "@types/react": "^18",
     "@types/react-dom": "^18",

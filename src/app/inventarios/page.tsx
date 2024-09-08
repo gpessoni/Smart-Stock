@@ -67,6 +67,10 @@ export default function Inventories() {
 
     const toast = useRef<Toast>(null)
 
+    const getAuthToken = () => {
+        return localStorage.getItem("authToken") || ""
+    }
+
     useEffect(() => {
         fetchInventories()
         fetchProductOptions()
@@ -74,14 +78,14 @@ export default function Inventories() {
         setLoading(false)
     }, [])
 
-    const onRowSelect = (e: any) => {
-        setInventory(e.data)
-        setInventoryDialog(true)
-    }
-
     const fetchInventories = async () => {
         try {
-            const response = await fetch("/api/product-inventory")
+            const authToken = getAuthToken()
+            const response = await fetch("/api/product-inventory", {
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                },
+            })
             const data = await response.json()
             setInventories(data)
         } catch (error) {
@@ -92,7 +96,12 @@ export default function Inventories() {
 
     const fetchProductOptions = async () => {
         try {
-            const products = await fetch("/api/products").then((res) => res.json())
+            const authToken = getAuthToken()
+            const products = await fetch("/api/products", {
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                },
+            }).then((res) => res.json())
             setProductOptions(products.map((p: any) => ({ label: p.description, value: p.id })))
         } catch (error) {
             console.error("Erro ao buscar produtos:", error)
@@ -102,7 +111,12 @@ export default function Inventories() {
 
     const fetchStorageOptions = async () => {
         try {
-            const storages = await fetch("/api/storages").then((res) => res.json())
+            const authToken = getAuthToken()
+            const storages = await fetch("/api/storages", {
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                },
+            }).then((res) => res.json())
             setStorageOptions(storages.map((s: any) => ({ label: s.description, value: s.id })))
         } catch (error) {
             console.error("Erro ao buscar armazéns:", error)
@@ -112,14 +126,18 @@ export default function Inventories() {
 
     const fetchStorageAddressOptions = async (storageId: string) => {
         try {
-            const storage = await fetch(`/api/storages/${storageId}`).then((res) => res.json())
+            const authToken = getAuthToken()
+            const storage = await fetch(`/api/storages/${storageId}`, {
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                },
+            }).then((res) => res.json())
             setStorageAddressOptions(storage.StorageAddress.map((sa: any) => ({ label: sa.address, value: sa.id })))
         } catch (error) {
             console.error("Erro ao buscar endereços:", error)
             toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar endereços", life: 3000 })
         }
     }
-
     const handleStorageChange = (e: any) => {
         const storageId = e.value
         setSelectedStorageId(storageId)
@@ -158,11 +176,13 @@ export default function Inventories() {
         if (inventory.productId && inventory.storageAddressId && inventory.quantity > 0) {
             let _inventories = [...inventories]
             try {
+                const authToken = getAuthToken()
                 const isUpdating = !!inventory.id
                 const response = await fetch(isUpdating ? `/api/product-inventory/${inventory.id}` : "/api/product-inventory", {
                     method: isUpdating ? "PATCH" : "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        Authorization: `Bearer ${authToken}`,
                     },
                     body: JSON.stringify({
                         productId: inventory.productId,
@@ -260,8 +280,12 @@ export default function Inventories() {
 
     const deleteInventory = async (inventory: Inventory) => {
         try {
+            const authToken = getAuthToken()
             const response = await fetch(`/api/product-inventory/${inventory.id}`, {
                 method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                },
             })
 
             if (response.ok) {
@@ -279,8 +303,12 @@ export default function Inventories() {
 
     const processInventories = async () => {
         try {
+            const authToken = getAuthToken()
             const response = await fetch("/api/product-inventory/process", {
                 method: "POST",
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                },
             })
 
             if (response.ok) {

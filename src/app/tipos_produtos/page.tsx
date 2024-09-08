@@ -34,19 +34,32 @@ export default function productTypeProducts() {
     const [submitted, setSubmitted] = useState<boolean>(false)
     const toast = useRef<Toast>(null)
 
+    const getAuthToken = () => {
+        return localStorage.getItem("authToken") || ""
+    }
+
     useEffect(() => {
-        fetchproductTypes()
+        fetchProductTypes()
         setLoading(false)
     }, [])
 
-    const fetchproductTypes = async () => {
+    const fetchProductTypes = async () => {
         try {
-            const response = await fetch("/api/product-types")
+            const response = await fetch("/api/product-types", {
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
+            })
             const data = await response.json()
             setproductTypes(data)
         } catch (error) {
             console.error("Erro ao buscar Tipos de Produtos:", error)
-            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar Tipos de Produtos", life: 3000 })
+            toast.current?.show({
+                severity: "error",
+                summary: "Erro",
+                detail: "Erro ao buscar Tipos de Produtos",
+                life: 3000,
+            })
         }
     }
 
@@ -77,7 +90,7 @@ export default function productTypeProducts() {
         setproductTypeDialog(false)
     }
 
-    const saveproductType = async () => {
+    const saveProductType = async () => {
         setSubmitted(true)
 
         if (productType.description.trim()) {
@@ -90,6 +103,7 @@ export default function productTypeProducts() {
                     method: isUpdating ? "PATCH" : "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        Authorization: `Bearer ${getAuthToken()}`,
                     },
                     body: JSON.stringify({ description: productType.description }),
                 })
@@ -104,22 +118,27 @@ export default function productTypeProducts() {
                 if (!isUpdating) {
                     _productTypes.push(result)
                 } else {
-                    _productTypes[_productTypes.findIndex((g) => g.id === productType.id)] = productType
+                    _productTypes[_productTypes.findIndex((pt) => pt.id === productType.id)] = result
                 }
 
                 toast.current?.show({
                     severity: "success",
                     summary: "Sucesso",
-                    detail: isUpdating ? "Tipos de Produto atualizado com sucesso" : "Tipos de Produto criado com sucesso",
+                    detail: isUpdating ? "Tipo de Produto atualizado com sucesso" : "Tipo de Produto criado com sucesso",
                     life: 3000,
                 })
                 setproductTypes(_productTypes)
                 setproductTypeDialog(false)
                 setproductType({ id: null, description: "" })
             } catch (error) {
-                console.error("Erro ao salvar Tipos de Produto:", error)
-                const errorMessage = error instanceof Error ? error.message : "Erro desconhecido ao salvar Tipos de Produto"
-                toast.current?.show({ severity: "error", summary: "Erro", detail: errorMessage, life: 4000 })
+                console.error("Erro ao salvar Tipo de Produto:", error)
+                const errorMessage = error instanceof Error ? error.message : "Erro desconhecido ao salvar Tipo de Produto"
+                toast.current?.show({
+                    severity: "error",
+                    summary: "Erro",
+                    detail: errorMessage,
+                    life: 4000,
+                })
             }
         } else {
             toast.current?.show({
@@ -136,29 +155,42 @@ export default function productTypeProducts() {
         setproductTypeDialog(true)
     }
 
-    const deleteproductType = async (productType: productTypeProduct) => {
+    const deleteProductType = async (productType: productTypeProduct) => {
         try {
             const response = await fetch(`/api/product-types/${productType.id}`, {
                 method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
             })
 
             if (response.ok) {
                 let _productTypes = productTypes.filter((val) => val.id !== productType.id)
                 setproductTypes(_productTypes)
-                toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Tipos de Produto deletado com sucesso", life: 3000 })
+                toast.current?.show({
+                    severity: "success",
+                    summary: "Sucesso",
+                    detail: "Tipo de Produto deletado com sucesso",
+                    life: 3000,
+                })
             } else {
-                throw new Error("Erro ao deletar Tipos de Produto")
+                throw new Error("Erro ao deletar Tipo de Produto")
             }
         } catch (error) {
-            console.error("Erro ao deletar Tipos de Produto:", error)
-            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao deletar Tipos de Produto", life: 3000 })
+            console.error("Erro ao deletar Tipo de Produto:", error)
+            toast.current?.show({
+                severity: "error",
+                summary: "Erro",
+                detail: "Erro ao deletar Tipo de Produto",
+                life: 3000,
+            })
         }
     }
 
     const productTypeDialogFooter = (
         <>
             <Button label="Cancelar" icon="pi pi-times" className="p-button-danger" onClick={hideDialog} />
-            <Button label="Salvar" icon="pi pi-check" className="p-button-success" onClick={saveproductType} />
+            <Button label="Salvar" icon="pi pi-check" className="p-button-success" onClick={saveProductType} />
         </>
     )
 
@@ -217,7 +249,7 @@ export default function productTypeProducts() {
                                     <Button icon="pi pi-pencil" className="p-button-rounded p-button-success mr-2" onClick={() => editproductType(rowData)} />
                                     <DeleteButton
                                         item={rowData}
-                                        onDelete={deleteproductType}
+                                        onDelete={deleteProductType}
                                         message={`Você tem certeza que deseja deletar o Tipos de Produto ${rowData.description}?`}
                                         header="Confirmação"
                                     />

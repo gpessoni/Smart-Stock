@@ -1,21 +1,21 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { Skeleton } from "primereact/skeleton"
-import { DataTable } from "primereact/datatable"
-import { Button } from "primereact/button"
-import { Dialog } from "primereact/dialog"
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog"
-import { InputText } from "primereact/inputtext"
-import { Toast } from "primereact/toast"
-import Navbar from "@/components/Navbar"
-import styles from "./../page.module.css"
-import { Column } from "primereact/column"
-import "primereact/resources/themes/lara-light-cyan/theme.css"
-import "primeicons/primeicons.css"
-import { Toolbar } from "primereact/toolbar"
-import DeleteButton from "@/components/Forms/DeleteButton"
 import AddressDialog from "@/components/Address/AddressDialog "
+import DeleteButton from "@/components/Forms/DeleteButton"
+import Navbar from "@/components/Navbar"
+import "primeicons/primeicons.css"
+import { Button } from "primereact/button"
+import { Column } from "primereact/column"
+import { ConfirmDialog } from "primereact/confirmdialog"
+import { DataTable } from "primereact/datatable"
+import { Dialog } from "primereact/dialog"
+import { InputText } from "primereact/inputtext"
+import "primereact/resources/themes/lara-light-cyan/theme.css"
+import { Skeleton } from "primereact/skeleton"
+import { Toast } from "primereact/toast"
+import { Toolbar } from "primereact/toolbar"
+import { useEffect, useRef, useState } from "react"
+import styles from "./../page.module.css"
 
 type Storage = {
     id: string | null
@@ -40,6 +40,10 @@ export default function Storages() {
     const [submitted, setSubmitted] = useState<boolean>(false)
     const toast = useRef<Toast>(null)
 
+    const getAuthToken = () => {
+        return localStorage.getItem("authToken") || ""
+    }
+
     useEffect(() => {
         fetchstorages()
         setLoading(false)
@@ -47,7 +51,13 @@ export default function Storages() {
 
     const fetchstorages = async () => {
         try {
-            const response = await fetch("/api/storages")
+            const response = await fetch("/api/storages", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
+            })
             const data = await response.json()
             setstorages(data)
         } catch (error) {
@@ -101,6 +111,7 @@ export default function Storages() {
                     method: isUpdating ? "PATCH" : "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        Authorization: `Bearer ${getAuthToken()}`,
                     },
                     body: JSON.stringify({ code: storage.code, description: storage.description }),
                 })
@@ -151,6 +162,9 @@ export default function Storages() {
         try {
             const response = await fetch(`/api/storages/${storage.id}`, {
                 method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
             })
 
             if (response.ok) {

@@ -56,9 +56,18 @@ export default function Users() {
         setLoading(false)
     }, [])
 
+    const getAuthToken = () => {
+        return localStorage.getItem("authToken") || ""
+    }
+
     const fetchUsers = async () => {
         try {
-            const response = await fetch("/api/users")
+            const authToken = getAuthToken()
+            const response = await fetch("/api/users", {
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                },
+            })
             const data = await response.json()
             setUsers(data)
         } catch (error) {
@@ -69,7 +78,12 @@ export default function Users() {
 
     const fetchDepartments = async () => {
         try {
-            const response = await fetch("/api/departments")
+            const authToken = getAuthToken()
+            const response = await fetch("/api/departments", {
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                },
+            })
             const data = await response.json()
             setDepartments(data)
         } catch (error) {
@@ -80,7 +94,19 @@ export default function Users() {
 
     const fetchPermissions = async (userId: string) => {
         try {
-            const [allPermissionsRes, departmentPermissionsRes] = await Promise.all([fetch("/api/permissions"), fetch(`/api/users/permissions/${userId}`)])
+            const authToken = getAuthToken()
+            const [allPermissionsRes, departmentPermissionsRes] = await Promise.all([
+                fetch("/api/permissions", {
+                    headers: {
+                        Authorization: `Bearer ${authToken}`,
+                    },
+                }),
+                fetch(`/api/users/permissions/${userId}`, {
+                    headers: {
+                        Authorization: `Bearer ${authToken}`,
+                    },
+                }),
+            ])
 
             const allPermissionsData = await allPermissionsRes.json()
             const departmentPermissionsData = await departmentPermissionsRes.json()
@@ -124,8 +150,7 @@ export default function Users() {
         if (user.username.trim() && user.department) {
             let _users = [...users]
             try {
-                console.log("Payload enviado:", JSON.stringify(user))
-
+                const authToken = getAuthToken()
                 const userJSON = {
                     username: user.username,
                     userId: user.department.id,
@@ -137,6 +162,7 @@ export default function Users() {
                     method: isUpdating ? "PATCH" : "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        Authorization: `Bearer ${authToken}`,
                     },
                     body: JSON.stringify(userJSON),
                 })
@@ -151,7 +177,6 @@ export default function Users() {
                 if (!isUpdating) {
                     _users.push(result)
                 } else {
-                    console.log(result)
                     const index = _users.findIndex((u) => u.id === user.id)
                     const userReturn = {
                         id: user.id,
@@ -208,8 +233,12 @@ export default function Users() {
 
     const deleteUser = async (user: User) => {
         try {
+            const authToken = getAuthToken()
             const response = await fetch(`/api/users/${user.id}`, {
                 method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                },
             })
 
             if (response.ok) {
@@ -227,10 +256,14 @@ export default function Users() {
 
     const handlePermissionToggle = async (permissionId: string, isChecked: boolean) => {
         try {
+            const authToken = getAuthToken()
             const method = isChecked ? "POST" : "DELETE"
             const response = await fetch(`/api/users/permissions`, {
                 method,
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${authToken}`,
+                },
                 body: JSON.stringify({ userId: user.id, permissionId }),
             })
 

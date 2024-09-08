@@ -1,20 +1,20 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { Skeleton } from "primereact/skeleton"
-import { DataTable } from "primereact/datatable"
-import { Button } from "primereact/button"
-import { Dialog } from "primereact/dialog"
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog"
-import { InputText } from "primereact/inputtext"
-import { Toast } from "primereact/toast"
-import Navbar from "@/components/Navbar"
-import styles from "./../page.module.css"
-import { Column } from "primereact/column"
-import "primereact/resources/themes/lara-light-cyan/theme.css"
-import "primeicons/primeicons.css"
-import { Toolbar } from "primereact/toolbar"
 import DeleteButton from "@/components/Forms/DeleteButton"
+import Navbar from "@/components/Navbar"
+import "primeicons/primeicons.css"
+import { Button } from "primereact/button"
+import { Column } from "primereact/column"
+import { ConfirmDialog } from "primereact/confirmdialog"
+import { DataTable } from "primereact/datatable"
+import { Dialog } from "primereact/dialog"
+import { InputText } from "primereact/inputtext"
+import "primereact/resources/themes/lara-light-cyan/theme.css"
+import { Skeleton } from "primereact/skeleton"
+import { Toast } from "primereact/toast"
+import { Toolbar } from "primereact/toolbar"
+import { useEffect, useRef, useState } from "react"
+import styles from "./../page.module.css"
 
 type GroupProduct = {
     id: string | null
@@ -28,7 +28,6 @@ export default function GroupProducts() {
     const [loading, setLoading] = useState<boolean>(true)
     const [groups, setGroups] = useState<GroupProduct[]>([])
     const [groupDialog, setGroupDialog] = useState<boolean>(false)
-    const [deleteDialog, setDeleteDialog] = useState<boolean>(false)
     const [group, setGroup] = useState<GroupProduct>({
         id: null,
         code: "",
@@ -37,6 +36,10 @@ export default function GroupProducts() {
     const [submitted, setSubmitted] = useState<boolean>(false)
     const toast = useRef<Toast>(null)
 
+    const getAuthToken = () => {
+        return localStorage.getItem("authToken") || ""
+    }
+
     useEffect(() => {
         fetchGroups()
         setLoading(false)
@@ -44,12 +47,21 @@ export default function GroupProducts() {
 
     const fetchGroups = async () => {
         try {
-            const response = await fetch("/api/product-groups")
+            const response = await fetch("/api/product-groups", {
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
+            })
             const data = await response.json()
             setGroups(data)
         } catch (error) {
             console.error("Erro ao buscar grupos:", error)
-            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar grupos", life: 3000 })
+            toast.current?.show({
+                severity: "error",
+                summary: "Erro",
+                detail: "Erro ao buscar grupos",
+                life: 3000,
+            })
         }
     }
 
@@ -94,6 +106,7 @@ export default function GroupProducts() {
                     method: isUpdating ? "PUT" : "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        Authorization: `Bearer ${getAuthToken()}`,
                     },
                     body: JSON.stringify(isUpdating ? group : { code: group.code, description: group.description }),
                 })
@@ -108,7 +121,7 @@ export default function GroupProducts() {
                 if (!isUpdating) {
                     _groups.push(result)
                 } else {
-                    _groups[_groups.findIndex((g) => g.id === group.id)] = group
+                    _groups[_groups.findIndex((g) => g.id === group.id)] = result
                 }
 
                 toast.current?.show({
@@ -123,7 +136,12 @@ export default function GroupProducts() {
             } catch (error) {
                 console.error("Erro ao salvar grupo:", error)
                 const errorMessage = error instanceof Error ? error.message : "Erro desconhecido ao salvar grupo"
-                toast.current?.show({ severity: "error", summary: "Erro", detail: errorMessage, life: 4000 })
+                toast.current?.show({
+                    severity: "error",
+                    summary: "Erro",
+                    detail: errorMessage,
+                    life: 4000,
+                })
             }
         } else {
             toast.current?.show({
@@ -144,18 +162,31 @@ export default function GroupProducts() {
         try {
             const response = await fetch(`/api/product-groups/${group.id}`, {
                 method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
             })
 
             if (response.ok) {
                 let _groups = groups.filter((val) => val.id !== group.id)
                 setGroups(_groups)
-                toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Grupo deletado com sucesso", life: 3000 })
+                toast.current?.show({
+                    severity: "success",
+                    summary: "Sucesso",
+                    detail: "Grupo deletado com sucesso",
+                    life: 3000,
+                })
             } else {
                 throw new Error("Erro ao deletar grupo")
             }
         } catch (error) {
             console.error("Erro ao deletar grupo:", error)
-            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao deletar grupo", life: 3000 })
+            toast.current?.show({
+                severity: "error",
+                summary: "Erro",
+                detail: "Erro ao deletar grupo",
+                life: 3000,
+            })
         }
     }
 

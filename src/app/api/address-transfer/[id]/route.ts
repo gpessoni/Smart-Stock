@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server"
 import { reverseTransferService } from "../src/services/ReverseTransferService"
 import { HttpStatus } from "@/app/api/config/http/httpUtils"
+import { authMiddleware } from "@/app/api/config/middlewares/authMiddleware"
 
 export async function PATCH(req: Request, context: { params: { id: string } }) {
+    const authResponse = authMiddleware(req)
+    if (authResponse.status !== 200) {
+        return authResponse
+    }
+
     try {
         const { id } = context.params
 

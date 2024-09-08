@@ -75,6 +75,10 @@ export default function Transfers() {
 
     const toast = useRef<Toast>(null)
 
+    const getAuthToken = () => {
+        return localStorage.getItem("authToken") || ""
+    }
+
     useEffect(() => {
         fetchTransfers()
         fetchProductOptions()
@@ -84,42 +88,78 @@ export default function Transfers() {
 
     const fetchTransfers = async () => {
         try {
-            const response = await fetch("/api/address-transfer")
+            const response = await fetch("/api/address-transfer", {
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
+            })
             const data = await response.json()
             setTransfers(data)
         } catch (error) {
             console.error("Erro ao buscar transferências:", error)
-            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar transferências", life: 3000 })
+            toast.current?.show({
+                severity: "error",
+                summary: "Erro",
+                detail: "Erro ao buscar transferências",
+                life: 3000,
+            })
         }
     }
 
     const fetchProductOptions = async () => {
         try {
-            const products = await fetch("/api/products").then((res) => res.json())
+            const products = await fetch("/api/products", {
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
+            }).then((res) => res.json())
             setProductOptions(products.map((p: any) => ({ label: p.description, value: p.id })))
         } catch (error) {
             console.error("Erro ao buscar produtos:", error)
-            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar produtos", life: 3000 })
+            toast.current?.show({
+                severity: "error",
+                summary: "Erro",
+                detail: "Erro ao buscar produtos",
+                life: 3000,
+            })
         }
     }
 
     const fetchStorageOptions = async () => {
         try {
-            const storages = await fetch("/api/storages").then((res) => res.json())
+            const storages = await fetch("/api/storages", {
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
+            }).then((res) => res.json())
             setStorageOptions(storages.map((s: any) => ({ label: s.description, value: s.id })))
         } catch (error) {
             console.error("Erro ao buscar armazéns:", error)
-            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar armazéns", life: 3000 })
+            toast.current?.show({
+                severity: "error",
+                summary: "Erro",
+                detail: "Erro ao buscar armazéns",
+                life: 3000,
+            })
         }
     }
 
     const fetchAddressOptions = async (storageId: string, setOptions: any) => {
         try {
-            const storage = await fetch(`/api/storages/${storageId}`).then((res) => res.json())
+            const storage = await fetch(`/api/storages/${storageId}`, {
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
+            }).then((res) => res.json())
             setOptions(storage.StorageAddress.map((sa: any) => ({ label: sa.address, value: sa.id })))
         } catch (error) {
             console.error("Erro ao buscar endereços:", error)
-            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar endereços", life: 3000 })
+            toast.current?.show({
+                severity: "error",
+                summary: "Erro",
+                detail: "Erro ao buscar endereços",
+                life: 3000,
+            })
         }
     }
 
@@ -144,19 +184,32 @@ export default function Transfers() {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
+                    Authorization: `Bearer ${getAuthToken()}`,
                 },
                 body: JSON.stringify({ return: true }),
             })
 
             if (response.ok) {
                 fetchTransfers()
-                toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Transferência estornada com sucesso", life: 3000 })
+                toast.current?.show({
+                    severity: "success",
+                    summary: "Sucesso",
+                    detail: "Transferência estornada com sucesso",
+                    life: 3000,
+                })
             } else {
-                throw new Error("Erro ao estornar transferência")
+                const errorData = await response.json()
+                const errorMessage = errorData.error || "Erro ao estornar transferência"
+                throw new Error(errorMessage)
             }
         } catch (error) {
             console.error("Erro ao estornar transferência:", error)
-            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao estornar transferência", life: 3000 })
+            toast.current?.show({
+                severity: "error",
+                summary: "Erro",
+                detail: error instanceof Error ? error.message : "Erro desconhecido ao estornar transferência",
+                life: 3000,
+            })
         }
     }
 
@@ -219,28 +272,45 @@ export default function Transfers() {
                     method,
                     headers: {
                         "Content-Type": "application/json",
+                        Authorization: `Bearer ${getAuthToken()}`,
                     },
                     body: JSON.stringify(body),
                 })
 
-                const savedTransfer = await response.json()
-
                 if (response.ok) {
-                    if (method === "POST") {
-                        setTransfers((prevTransfers) => [...prevTransfers, savedTransfer])
-                    } else {
-                        setTransfers((prevTransfers) => prevTransfers.map((t) => (t.id === savedTransfer.id ? savedTransfer : t)))
-                    }
+                    const savedTransfer = await response.json()
+                    setTransfers((prevTransfers) =>
+                        method === "POST" ? [...prevTransfers, savedTransfer] : prevTransfers.map((t) => (t.id === savedTransfer.id ? savedTransfer : t))
+                    )
 
-                    toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Transferência salva com sucesso", life: 3000 })
+                    toast.current?.show({
+                        severity: "success",
+                        summary: "Sucesso",
+                        detail: "Transferência salva com sucesso",
+                        life: 3000,
+                    })
                     hideDialog()
                 } else {
-                    throw new Error("Erro na resposta do servidor")
+                    const errorData = await response.json()
+                    const errorMessage = errorData.error || "Erro ao salvar transferência"
+                    throw new Error(errorMessage)
                 }
             } catch (error) {
                 console.error("Erro ao salvar transferência:", error)
-                toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao salvar transferência", life: 3000 })
+                toast.current?.show({
+                    severity: "error",
+                    summary: "Erro",
+                    detail: error instanceof Error ? error.message : "Erro desconhecido ao salvar transferência",
+                    life: 3000,
+                })
             }
+        } else {
+            toast.current?.show({
+                severity: "warn",
+                summary: "Atenção",
+                detail: "Preencha todos os campos obrigatórios.",
+                life: 3000,
+            })
         }
     }
 

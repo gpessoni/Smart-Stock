@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { InputText } from "primereact/inputtext"
 import { Button } from "primereact/button"
+import { Toast } from "primereact/toast"
 import Image from "next/image"
 import "primereact/resources/themes/lara-light-indigo/theme.css"
 import "primereact/resources/primereact.min.css"
@@ -10,17 +11,45 @@ import "primeicons/primeicons.css"
 import styles from "./page.module.css"
 
 export default function Home() {
-    const [email, setEmail] = useState("")
+    const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
+    const toast = useRef<any>(null)
 
-    const handleLogin = () => {
-        console.log("Email:", email)
-        console.log("Password:", password)
-        window.location.href = "/produtos"
+    const handleLogin = async () => {
+        try {
+            const response = await fetch("http://localhost:3000/api/users/auth", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ username, password }),
+            })
+
+            if (!response.ok) {
+                throw new Error("Falha ao fazer login")
+            }
+
+            const data = await response.json()
+            const { token } = data
+
+            if (token) {
+                localStorage.setItem("authToken", token)
+                window.location.href = "/produtos"
+            } else {
+                showError("Token de autenticação não recebido")
+            }
+        } catch (error: any) {
+            showError(error.message)
+        }
+    }
+
+    const showError = (message: string) => {
+        toast.current?.show({ severity: "error", summary: "Erro", detail: message })
     }
 
     return (
         <div className={styles.loginContainer}>
+            <Toast ref={toast} />
             <div className={styles.logoContainer}>
                 <Image src="https://cdn-icons-png.flaticon.com/512/4947/4947506.png" alt="Logo" width={50} height={50} />
                 <h2>SmartStock</h2>
@@ -28,14 +57,14 @@ export default function Home() {
             <div className={styles.formContainer}>
                 <span className="p-float-label" style={{ marginTop: "1rem" }}>
                     <InputText
-                        id="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        id="username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
                         style={{
                             width: "100%",
                         }}
                     />
-                    <label htmlFor="email">Email</label>
+                    <label htmlFor="username">Username</label>
                 </span>
                 <span className="p-float-label" style={{ marginTop: "3rem" }}>
                     <InputText

@@ -37,18 +37,31 @@ export default function permissions() {
     const toast = useRef<Toast>(null)
 
     useEffect(() => {
-        fetchpermissions()
+        fetchPermissions()
         setLoading(false)
     }, [])
 
-    const fetchpermissions = async () => {
+    const getAuthToken = () => {
+        return localStorage.getItem("authToken") || ""
+    }
+
+    const fetchPermissions = async () => {
         try {
-            const response = await fetch("/api/permissions")
+            const response = await fetch("/api/permissions", {
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
+            })
             const data = await response.json()
             setpermissions(data)
         } catch (error) {
             console.error("Erro ao buscar Permissões:", error)
-            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar Permissões", life: 3000 })
+            toast.current?.show({
+                severity: "error",
+                summary: "Erro",
+                detail: "Erro ao buscar Permissões",
+                life: 3000,
+            })
         }
     }
 
@@ -79,7 +92,7 @@ export default function permissions() {
         setpermissionDialog(false)
     }
 
-    const savepermission = async () => {
+    const savePermission = async () => {
         setSubmitted(true)
 
         if (permission.description.trim()) {
@@ -92,6 +105,7 @@ export default function permissions() {
                     method: isUpdating ? "PATCH" : "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        Authorization: `Bearer ${getAuthToken()}`,
                     },
                     body: JSON.stringify({ description: permission.description, route: permission.route }),
                 })
@@ -106,13 +120,13 @@ export default function permissions() {
                 if (!isUpdating) {
                     _permissions.push(result)
                 } else {
-                    _permissions[_permissions.findIndex((g) => g.id === permission.id)] = permission
+                    _permissions[_permissions.findIndex((p) => p.id === permission.id)] = result
                 }
 
                 toast.current?.show({
                     severity: "success",
                     summary: "Sucesso",
-                    detail: isUpdating ? "Permissão atualizado com sucesso" : "Permissão criado com sucesso",
+                    detail: isUpdating ? "Permissão atualizada com sucesso" : "Permissão criada com sucesso",
                     life: 3000,
                 })
                 setpermissions(_permissions)
@@ -121,7 +135,12 @@ export default function permissions() {
             } catch (error) {
                 console.error("Erro ao salvar Permissão:", error)
                 const errorMessage = error instanceof Error ? error.message : "Erro desconhecido ao salvar Permissão"
-                toast.current?.show({ severity: "error", summary: "Erro", detail: errorMessage, life: 4000 })
+                toast.current?.show({
+                    severity: "error",
+                    summary: "Erro",
+                    detail: errorMessage,
+                    life: 4000,
+                })
             }
         } else {
             toast.current?.show({
@@ -138,29 +157,42 @@ export default function permissions() {
         setpermissionDialog(true)
     }
 
-    const deletepermission = async (permission: Permission) => {
+    const deletePermission = async (permission: Permission) => {
         try {
             const response = await fetch(`/api/permissions/${permission.id}`, {
                 method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
             })
 
             if (response.ok) {
                 let _permissions = permissions.filter((val) => val.id !== permission.id)
                 setpermissions(_permissions)
-                toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Permissão deletado com sucesso", life: 3000 })
+                toast.current?.show({
+                    severity: "success",
+                    summary: "Sucesso",
+                    detail: "Permissão deletada com sucesso",
+                    life: 3000,
+                })
             } else {
                 throw new Error("Erro ao deletar Permissão")
             }
         } catch (error) {
             console.error("Erro ao deletar Permissão:", error)
-            toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao deletar Permissão", life: 3000 })
+            toast.current?.show({
+                severity: "error",
+                summary: "Erro",
+                detail: "Erro ao deletar Permissão",
+                life: 3000,
+            })
         }
     }
 
     const permissionDialogFooter = (
         <>
             <Button label="Cancelar" icon="pi pi-times" className="p-button-danger" onClick={hideDialog} />
-            <Button label="Salvar" icon="pi pi-check" className="p-button-success" onClick={savepermission} />
+            <Button label="Salvar" icon="pi pi-check" className="p-button-success" onClick={savePermission} />
         </>
     )
 
@@ -220,7 +252,7 @@ export default function permissions() {
                                     <Button icon="pi pi-pencil" className="p-button-rounded p-button-success mr-2" onClick={() => editpermission(rowData)} />
                                     <DeleteButton
                                         item={rowData}
-                                        onDelete={deletepermission}
+                                        onDelete={deletePermission}
                                         message={`Você tem certeza que deseja deletar o Permissão ${rowData.description}?`}
                                         header="Confirmação"
                                     />

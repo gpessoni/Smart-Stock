@@ -1,51 +1,59 @@
-import { NextResponse } from "next/server";
-import { deleteStorageAddressService } from "../src/services/DeleteStorageAddressService";
-import { HttpStatus } from "@/app/api/config/http/httpUtils";
-import { getStorageAddressByIdService } from "../src/services/GetStorageAddressByIdService";
-import { updateStorageAddressService } from "../src/services/UpdateStorageAddressService";
+import { NextResponse } from "next/server"
+import { deleteStorageAddressService } from "../src/services/DeleteStorageAddressService"
+import { HttpStatus } from "@/app/api/config/http/httpUtils"
+import { getStorageAddressByIdService } from "../src/services/GetStorageAddressByIdService"
+import { updateStorageAddressService } from "../src/services/UpdateStorageAddressService"
+import { authMiddleware } from "@/app/api/config/middlewares/authMiddleware"
 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+    const authResponse = authMiddleware(req)
+    if (authResponse.status !== 200) {
+        return authResponse
+    }
+
     try {
-        return await deleteStorageAddressService(params.id);
+        const { id } = params
+        if (!id) {
+            return NextResponse.json({ error: "ID do endereço de armazenamento é obrigatório" }, { status: HttpStatus.BAD_REQUEST })
+        }
+        return await deleteStorageAddressService(id)
     } catch (error) {
-        return NextResponse.json({ message: "Erro no servidor", error: (error as Error).message }, { status: HttpStatus.INTERNAL_SERVER_ERROR });
+        return NextResponse.json({ message: "Erro no servidor", error: (error as Error).message }, { status: HttpStatus.INTERNAL_SERVER_ERROR })
     }
 }
 
 export async function GET(req: Request, context: { params: { id: string } }) {
+    const authResponse = authMiddleware(req)
+    if (authResponse.status !== 200) {
+        return authResponse
+    }
+
     try {
-        const { id } = context.params;
-
+        const { id } = context.params
         if (!id) {
-            return NextResponse.json(
-                { error: "ID do Grupo de produto é obrigatório" },
-                { status: HttpStatus.BAD_REQUEST }
-            );
+            return NextResponse.json({ error: "ID do endereço de armazenamento é obrigatório" }, { status: HttpStatus.BAD_REQUEST })
         }
-
-        return await getStorageAddressByIdService(id);
+        return await getStorageAddressByIdService(id)
     } catch (error) {
-        return NextResponse.json(
-            { message: "Erro no servidor", error: (error as Error).message },
-            { status: HttpStatus.INTERNAL_SERVER_ERROR }
-        );
+        return NextResponse.json({ message: "Erro no servidor", error: (error as Error).message }, { status: HttpStatus.INTERNAL_SERVER_ERROR })
     }
 }
 
 export async function PATCH(req: Request, context: { params: { id: string } }) {
+    const authResponse = authMiddleware(req)
+    if (authResponse.status !== 200) {
+        return authResponse
+    }
+
     try {
-        const { id } = context.params;
-        const body = await req.json();
+        const { id } = context.params
+        const body = await req.json()
 
         if (!id) {
-            return NextResponse.json({ error: "ID do Armazém é obrigatório" }, { status: HttpStatus.BAD_REQUEST });
+            return NextResponse.json({ error: "ID do endereço de armazenamento é obrigatório" }, { status: HttpStatus.BAD_REQUEST })
         }
-
-        return await updateStorageAddressService(id, body);
+        return await updateStorageAddressService(id, body)
     } catch (error) {
-        return NextResponse.json(
-            { message: "Erro no servidor", error: (error as Error).message },
-            { status: HttpStatus.INTERNAL_SERVER_ERROR }
-        );
+        return NextResponse.json({ message: "Erro no servidor", error: (error as Error).message }, { status: HttpStatus.INTERNAL_SERVER_ERROR })
     }
 }

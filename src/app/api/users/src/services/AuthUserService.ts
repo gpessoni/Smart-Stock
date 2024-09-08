@@ -1,11 +1,11 @@
 import { prisma } from "@/app/api/config/prisma"
-import bcrypt from "bcryptjs"
+import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import { NextResponse } from "next/server"
 import { HttpStatus } from "@/app/api/config/http/httpUtils"
 import { loginValidation } from "../validation"
 
-const JWT_SECRET = process.env.JWT_SECRET || "defaultsecret" // Substitua por uma variável de ambiente segura
+const JWT_SECRET = process.env.JWT_SECRET || "defaultsecret"
 const JWT_EXPIRES_IN = "6h" 
 
 export async function loginService(req: Request) {

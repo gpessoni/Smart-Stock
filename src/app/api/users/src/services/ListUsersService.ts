@@ -12,6 +12,7 @@ export async function listUsersService() {
 
         return NextResponse.json(users, { status: HttpStatus.OK });
     } catch (error) {
+        console.log(error);
         return NextResponse.json({
             message: "Erro ao listar usuários",
             error: (error as Error).message

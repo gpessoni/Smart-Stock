@@ -2,10 +2,11 @@ import { NextResponse } from "next/server"
 import jwt from "jsonwebtoken"
 import { HttpStatus } from "@/app/api/config/http/httpUtils"
 
-const JWT_SECRET = process.env.JWT_SECRET || "defaultsecret" // Substitua por uma variável de ambiente segura
+const JWT_SECRET = process.env.JWT_SECRET || "defaultsecret"
 
 export function validateToken(token: string) {
     try {
+        console.log(token)
         const decoded = jwt.verify(token, JWT_SECRET)
         return decoded
     } catch (error) {
@@ -32,5 +33,5 @@ export function authMiddleware(req: Request) {
         return NextResponse.json({ error: "Token inválido ou expirado" }, { status: HttpStatus.UNAUTHORIZED })
     }
 
-    return NextResponse.next() 
+    return NextResponse.next()
 }
