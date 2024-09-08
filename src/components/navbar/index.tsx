@@ -62,6 +62,7 @@ const Navbar = () => {
                     <S.NavLink href="/produtos">Produtos</S.NavLink>
                     <S.NavLink href="/estoques">Solicitações ao Almoxarifado</S.NavLink>
                     <S.NavLink href="/estoques">Ordens de Separação</S.NavLink>
+                    <S.NavLink href="/estoques">Transferências</S.NavLink>
                 </S.NavLinks>
             )}
 

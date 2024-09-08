@@ -79,6 +79,7 @@ export async function reverseTransferService(transferId: string) {
                 fromAddressId: toAddressId,
                 toAddressId: fromAddressId,
                 quantity,
+                return: true,
             },
         })
 
