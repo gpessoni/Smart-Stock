@@ -37,6 +37,10 @@ const AddressDialog = ({ storageId, visible, onHide }: AddressDialogProps) => {
     const [deleteDialog, setDeleteDialog] = useState<boolean>(false)
     const [addressToDelete, setAddressToDelete] = useState<Address | null>(null)
 
+    const getAuthToken = () => {
+        return localStorage.getItem("authToken") || ""
+    }
+
     const toast = useRef<Toast>(null)
 
     useEffect(() => {
@@ -47,7 +51,11 @@ const AddressDialog = ({ storageId, visible, onHide }: AddressDialogProps) => {
 
     const fetchAddresses = async () => {
         try {
-            const response = await fetch(`/api/addresses`)
+            const response = await fetch(`/api/addresses`, {
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
+            })
             const data = await response.json()
             setAddresses(data.filter((a: Address) => a.storageId === storageId))
             setLoading(false)
@@ -69,6 +77,7 @@ const AddressDialog = ({ storageId, visible, onHide }: AddressDialogProps) => {
                     method: isUpdating ? "PATCH" : "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        Authorization: `Bearer ${getAuthToken()}`,
                     },
                     body: JSON.stringify({ address: address.address, description: address.description, storageId: storageId }),
                 })
@@ -126,6 +135,9 @@ const AddressDialog = ({ storageId, visible, onHide }: AddressDialogProps) => {
             try {
                 const response = await fetch(`/api/addresses/${addressToDelete.id}`, {
                     method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${getAuthToken()}`,
+                    },
                 })
 
                 if (response.ok) {
