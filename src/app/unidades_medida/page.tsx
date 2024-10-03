@@ -102,7 +102,7 @@ export default function UnitsMeasurement() {
 
                 const isUpdating = !!group.id
                 const response = await fetch(isUpdating ? `/api/unit-measure/${group.id}` : "/api/unit-measure", {
-                    method: isUpdating ? "PUT" : "POST",
+                    method: isUpdating ? "PATCH" : "POST",
                     headers: {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${getAuthToken()}`,

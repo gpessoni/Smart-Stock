@@ -53,7 +53,6 @@ const Navbar = () => {
                 })
 
                 const data = await response.json()
-                console.log(data.valid)
 
                 if (!data.valid) {
                     window.location.href = "/"
@@ -114,6 +113,7 @@ const Navbar = () => {
                             <S.OptionItem href="/grupos_produtos">Grupos de Produtos</S.OptionItem>
                             <S.OptionItem href="/tipos_produtos">Tipos de Produtos</S.OptionItem>
                             <S.OptionItem href="/unidades_medida">Unidades de Medidas</S.OptionItem>
+                            <S.OptionItem href="/">Logout</S.OptionItem>
                         </S.OptionsMenu>
                         <S.OptionsMenuUsers showOptions={showOptionsUsers}>
                             <S.OptionItem href="/usuarios">Usuários</S.OptionItem>

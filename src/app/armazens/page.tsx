@@ -2,7 +2,6 @@
 
 import AddressDialog from "@/components/Address/AddressDialog "
 import DeleteButton from "@/components/Forms/DeleteButton"
-import Navbar from "@/components/Navbar"
 import "primeicons/primeicons.css"
 import { Button } from "primereact/button"
 import { Column } from "primereact/column"
@@ -16,6 +15,7 @@ import { Toast } from "primereact/toast"
 import { Toolbar } from "primereact/toolbar"
 import { useEffect, useRef, useState } from "react"
 import styles from "./../page.module.css"
+import Navbar from "@/components/Navbar"
 
 type Storage = {
     id: string | null
@@ -104,8 +104,6 @@ export default function Storages() {
         if (storage.description.trim()) {
             let _storages = [...storages]
             try {
-                console.log("Payload enviado:", JSON.stringify(storage))
-
                 const isUpdating = !!storage.id
                 const response = await fetch(isUpdating ? `/api/storages/${storage.id}` : "/api/storages", {
                     method: isUpdating ? "PATCH" : "POST",

@@ -3,7 +3,6 @@ import { NextResponse } from "next/server"
 import { HttpStatus } from "@/app/api/config/http/httpUtils"
 
 export async function reverseTransferService(transferId: string) {
-    console.log(transferId)
     try {
         const originalTransfer = await prisma.addressTransfer.findUnique({
             where: {

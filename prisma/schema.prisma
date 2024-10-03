@@ -19,21 +19,22 @@ model Users {
 }
 
 model Permissions {
-  id          String   @id @default(uuid())
-  route       String   @unique
-  description String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  Users       Users?   @relation(fields: [usersId], references: [id])
-  usersId     String?
+  id            String       @id @default(uuid())
+  route         String       @unique
+  description   String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  Users         Users[]
+  Departments   Departments[]
 }
 
 model Departments {
-  id          String   @id @default(uuid())
+  id          String        @id @default(uuid())
   description String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
   Users       Users[]
+  permissions Permissions[]
 }
 
 model TypeProducts {

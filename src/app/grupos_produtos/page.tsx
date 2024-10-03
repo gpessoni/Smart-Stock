@@ -102,13 +102,16 @@ export default function GroupProducts() {
                 console.log("Payload enviado:", JSON.stringify(group))
 
                 const isUpdating = !!group.id
+
+                const { id, createdAt, updatedAt, ...payload } = group
+
                 const response = await fetch(isUpdating ? `/api/product-groups/${group.id}` : "/api/product-groups", {
-                    method: isUpdating ? "PUT" : "POST",
+                    method: isUpdating ? "PATCH" : "POST",
                     headers: {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${getAuthToken()}`,
                     },
-                    body: JSON.stringify(isUpdating ? group : { code: group.code, description: group.description }),
+                    body: JSON.stringify(isUpdating ? payload : { code: group.code, description: group.description }),
                 })
 
                 if (!response.ok) {

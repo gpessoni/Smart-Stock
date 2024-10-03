@@ -82,9 +82,6 @@ export default function Home() {
             </div>
 
             <div className={styles.linksContainer}>
-                <a href="/forgot-password" className={styles.link}>
-                    Esqueceu a senha?
-                </a>
                 <a href="/termos_uso" className={styles.link}>
                     Ver os termos de uso
                 </a>

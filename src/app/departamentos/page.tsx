@@ -109,7 +109,7 @@ export default function Departments() {
             const departmentPermissionsData = await departmentPermissionsRes.json()
 
             setAllPermissions(allPermissionsData)
-            setDepartmentPermissions(departmentPermissionsData.map((perm: { id: string }) => perm.id))
+            setDepartmentPermissions(departmentPermissionsData?.map((perm: { id: string }) => perm.id))
             setPermissionsDialog(true)
         } catch (error) {
             console.error("Erro ao buscar permissões:", error)

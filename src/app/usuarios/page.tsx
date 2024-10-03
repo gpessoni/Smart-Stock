@@ -153,7 +153,7 @@ export default function Users() {
                 const authToken = getAuthToken()
                 const userJSON = {
                     username: user.username,
-                    userId: user.department.id,
+                    departmentId: user.department.id,
                     password: user.password,
                 }
 

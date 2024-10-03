@@ -1,37 +1,29 @@
-import Joi from "joi";
+import Joi from "joi"
 
-export const createProductInventoryValidation = Joi.object({
-    productId: Joi.string().uuid().required().messages({
-        "any.required": "ProductId é obrigatório",
-        "string.empty": "ProductId não pode estar vazio",
-        "string.uuid": "ProductId deve ser um UUID válido",
-    }),
-    storageAddressId: Joi.string().uuid().required().messages({
-        "any.required": "StorageAddressId é obrigatório",
-        "string.empty": "StorageAddressId não pode estar vazio",
-        "string.uuid": "StorageAddressId deve ser um UUID válido",
-    }),
-    quantity: Joi.number().integer().required().messages({
-        "any.required": "Quantity é obrigatório",
-        "number.base": "Quantity deve ser um número inteiro",
-    }),
-});
+export const createStockRequestValidation = Joi.object({
+    items: Joi.array()
+        .items(
+            Joi.object({
+                productId: Joi.string().uuid().required(),
+                storageAddressId: Joi.string().uuid().required(),
+                quantity: Joi.number().integer().required(),
+            })
+        )
+        .min(1)
+        .required(),
+})
 
-export const deleteProductInventoryValidation = Joi.string().uuid().required();
+export const updateStockRequestValidation = Joi.object({
+    status: Joi.string().valid("PENDING", "APPROVED", "REJECTED").optional(),
+    items: Joi.array()
+        .items(
+            Joi.object({
+                productId: Joi.string().uuid().required(),
+                storageAddressId: Joi.string().uuid().required(),
+                quantity: Joi.number().integer().required(),
+            })
+        )
+        .optional(),
+})
 
-export const updateProductInventoryValidation = Joi.object({
-    productId: Joi.string().uuid().required().messages({
-        "any.required": "ProductId é obrigatório",
-        "string.empty": "ProductId não pode estar vazio",
-        "string.uuid": "ProductId deve ser um UUID válido",
-    }),
-    storageAddressId: Joi.string().uuid().required().messages({
-        "any.required": "StorageAddressId é obrigatório",
-        "string.empty": "StorageAddressId não pode estar vazio",
-        "string.uuid": "StorageAddressId deve ser um UUID válido",
-    }),
-    quantity: Joi.number().integer().required().messages({
-        "any.required": "Quantity é obrigatório",
-        "number.base": "Quantity deve ser um número inteiro",
-    }),
-});
+export const deleteStockRequestValidation = Joi.string().uuid().required()

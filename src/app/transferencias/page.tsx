@@ -290,6 +290,7 @@ export default function Transfers() {
                         life: 3000,
                     })
                     hideDialog()
+                    fetchTransfers()
                 } else {
                     const errorData = await response.json()
                     const errorMessage = errorData.error || "Erro ao salvar transferência"
