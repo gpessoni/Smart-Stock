@@ -6,7 +6,7 @@ import "primeicons/primeicons.css"
 import { Button } from "primereact/button"
 import { Column } from "primereact/column"
 import { ConfirmDialog } from "primereact/confirmdialog"
-import { DataTable } from "primereact/datatable"
+import { DataTable, DataTableFilterMeta } from "primereact/datatable"
 import { Dialog } from "primereact/dialog"
 import { InputText } from "primereact/inputtext"
 import "primereact/resources/themes/lara-light-cyan/theme.css"
@@ -35,6 +35,12 @@ export default function GroupProducts() {
     })
     const [submitted, setSubmitted] = useState<boolean>(false)
     const toast = useRef<Toast>(null)
+
+    const [filters, setFilters] = useState<DataTableFilterMeta>({
+        name: { value: null, matchMode: "contains" },
+        createdAt: { value: null, matchMode: "contains" },
+        updatedAt: { value: null, matchMode: "contains" },
+    })
 
     const getAuthToken = () => {
         return localStorage.getItem("authToken") || ""
@@ -72,11 +78,15 @@ export default function GroupProducts() {
             </div>
         )
     }
-
     const rightToolbarTemplate = () => {
         return (
             <div className="flex justify-between w-full">
-                <InputText id="code" placeholder="Pesquisar" className="ml-2" />
+                <InputText
+                    id="globalFilter"
+                    placeholder="Pesquisar"
+                    onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, global: { value: e.target.value, matchMode: "contains" } })}
+                    className="ml-2"
+                />
             </div>
         )
     }
@@ -215,6 +225,8 @@ export default function GroupProducts() {
             <div className="card">
                 <Toolbar className="p-mb-4 p-toolbar" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
                 <DataTable
+                    filters={filters}
+                    onFilter={(e) => setFilters(e.filters as DataTableFilterMeta)}
                     header="Grupos de Produtos"
                     style={{
                         width: "100%",
