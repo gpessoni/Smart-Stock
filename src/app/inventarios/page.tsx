@@ -6,9 +6,10 @@ import "primeicons/primeicons.css"
 import { Button } from "primereact/button"
 import { Column } from "primereact/column"
 import { ConfirmDialog } from "primereact/confirmdialog"
-import { DataTable } from "primereact/datatable"
+import { DataTable, DataTableFilterMeta } from "primereact/datatable"
 import { Dialog } from "primereact/dialog"
 import { Dropdown } from "primereact/dropdown"
+import { InputText } from "primereact/inputtext"
 import "primereact/resources/themes/lara-light-cyan/theme.css"
 import { Skeleton } from "primereact/skeleton"
 import { Toast } from "primereact/toast"
@@ -64,6 +65,12 @@ export default function Inventories() {
     const [storageOptions, setStorageOptions] = useState<DropdownOption[]>([])
     const [storageAddressOptions, setStorageAddressOptions] = useState<DropdownOption[]>([])
     const [selectedStorageId, setSelectedStorageId] = useState<string | null>(null)
+
+    const [filters, setFilters] = useState<DataTableFilterMeta>({
+        name: { value: null, matchMode: "contains" },
+        createdAt: { value: null, matchMode: "contains" },
+        updatedAt: { value: null, matchMode: "contains" },
+    })
 
     const toast = useRef<Toast>(null)
 
@@ -261,13 +268,11 @@ export default function Inventories() {
     const rightToolbarTemplate = () => {
         return (
             <div className="flex justify-between w-full">
-                <Button
-                    label="Processar Inventários"
-                    icon="pi pi-check"
-                    className="p-button-info"
-                    onClick={() => {
-                        setVisible(true)
-                    }}
+                <InputText
+                    id="globalFilter"
+                    placeholder="Pesquisar"
+                    onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, global: { value: e.target.value, matchMode: "contains" } })}
+                    className="ml-2"
                 />
             </div>
         )
@@ -347,7 +352,14 @@ export default function Inventories() {
                     {loading ? (
                         <Skeleton />
                     ) : (
-                        <DataTable value={inventories} paginator rows={10} className="datatable-responsive">
+                        <DataTable
+                            filters={filters}
+                            onFilter={(e) => setFilters(e.filters as DataTableFilterMeta)}
+                            value={inventories}
+                            paginator
+                            rows={10}
+                            className="datatable-responsive"
+                        >
                             <Column field="product.code" header="Código" sortable />
                             <Column field="product.description" header="Descrição" sortable />
                             <Column field="storageAddress.address" header="Endereço" sortable />

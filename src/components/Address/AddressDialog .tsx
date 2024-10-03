@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Dialog } from "primereact/dialog"
 import { Button } from "primereact/button"
-import { DataTable } from "primereact/datatable"
+import { DataTable, DataTableFilterMeta } from "primereact/datatable"
 import { Column } from "primereact/column"
 import { InputText } from "primereact/inputtext"
 import { Toast } from "primereact/toast"
@@ -36,6 +36,12 @@ const AddressDialog = ({ storageId, visible, onHide }: AddressDialogProps) => {
     const [submitted, setSubmitted] = useState<boolean>(false)
     const [deleteDialog, setDeleteDialog] = useState<boolean>(false)
     const [addressToDelete, setAddressToDelete] = useState<Address | null>(null)
+
+    const [filters, setFilters] = useState<DataTableFilterMeta>({
+        name: { value: null, matchMode: "contains" },
+        createdAt: { value: null, matchMode: "contains" },
+        updatedAt: { value: null, matchMode: "contains" },
+    })
 
     const getAuthToken = () => {
         return localStorage.getItem("authToken") || ""
@@ -157,6 +163,20 @@ const AddressDialog = ({ storageId, visible, onHide }: AddressDialogProps) => {
         }
     }
 
+    const rightToolbarTemplate = () => {
+        return (
+            <div className="flex justify-between w-full">
+                <InputText
+                    id="globalFilter"
+                    placeholder="Pesquisar"
+                    onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, global: { value: e.target.value, matchMode: "contains" } })}
+                    className="ml-2"
+                />
+            </div>
+        )
+    }
+
+
     const addressDialogFooter = (
         <>
             <Button label="Cancelar" icon="pi pi-times" className="p-button-danger" onClick={() => setAddressDialog(false)} />
@@ -178,8 +198,10 @@ const AddressDialog = ({ storageId, visible, onHide }: AddressDialogProps) => {
                 <Toolbar
                     className="p-mb-4 p-toolbar"
                     left={<Button label="Novo Endereço" icon="pi pi-plus" className="p-button-success" onClick={() => setAddressDialog(true)} />}
+                    right={rightToolbarTemplate}
                 />
-                <DataTable value={addresses} loading={loading} paginator rows={5}>
+                <DataTable value={addresses} loading={loading} paginator rows={5} filters={filters}
+                    onFilter={(e) => setFilters(e.filters as DataTableFilterMeta)}>
                     <Column field="address" header="Endereço" sortable />
                     <Column field="description" header="Descrição" sortable />
                     <Column
