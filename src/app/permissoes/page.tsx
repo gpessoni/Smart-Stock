@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Skeleton } from "primereact/skeleton"
-import { DataTable } from "primereact/datatable"
+import { DataTable, DataTableFilterMeta } from "primereact/datatable"
 import { Button } from "primereact/button"
 import { Dialog } from "primereact/dialog"
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog"
@@ -32,6 +32,11 @@ export default function permissions() {
         id: null,
         route: "",
         description: "",
+    })
+    const [filters, setFilters] = useState<DataTableFilterMeta>({
+        name: { value: null, matchMode: "contains" },
+        createdAt: { value: null, matchMode: "contains" },
+        updatedAt: { value: null, matchMode: "contains" },
     })
     const [submitted, setSubmitted] = useState<boolean>(false)
     const toast = useRef<Toast>(null)
@@ -76,7 +81,12 @@ export default function permissions() {
     const rightToolbarTemplate = () => {
         return (
             <div className="flex justify-between w-full">
-                <InputText id="code" placeholder="Pesquisar" className="ml-2" />
+                <InputText
+                    id="globalFilter"
+                    placeholder="Pesquisar"
+                    onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, global: { value: e.target.value, matchMode: "contains" } })}
+                    className="ml-2"
+                />
             </div>
         )
     }
@@ -212,6 +222,8 @@ export default function permissions() {
                 <Toolbar className="p-mb-4 p-toolbar" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
                 <DataTable
                     header="Permissões"
+                    filters={filters}
+                    onFilter={(e) => setFilters(e.filters as DataTableFilterMeta)}
                     style={{
                         width: "100%",
                         overflow: "auto",
