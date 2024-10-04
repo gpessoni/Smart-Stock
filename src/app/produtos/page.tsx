@@ -182,6 +182,7 @@ export default function Products() {
                 })
 
                 setProducts(_products)
+                fetchProducts()
                 setProductDialog(false)
                 setProduct({
                     id: null,

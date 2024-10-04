@@ -138,6 +138,7 @@ export default function Inventories() {
             toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar endereços", life: 3000 })
         }
     }
+    
     const handleStorageChange = (e: any) => {
         const storageId = e.value
         setSelectedStorageId(storageId)
@@ -428,7 +429,7 @@ export default function Inventories() {
                                 onChange={(e) => setInventory({ ...inventory, storageAddressId: e.value })}
                                 placeholder="Selecione um endereço"
                             />
-                            {submitted && !inventory.storageAddressId && <small className="p-invalid">Endereço é obrigatório.</small>}
+                            {submitted && storageAddressOptions.length === 0 && !inventory.storageAddressId && <small className="p-invalid">Endereço é obrigatório.</small>}
                         </div>
                     )}
 
