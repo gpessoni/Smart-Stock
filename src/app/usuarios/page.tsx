@@ -6,7 +6,7 @@ import "primeicons/primeicons.css"
 import { Button } from "primereact/button"
 import { Column } from "primereact/column"
 import { ConfirmDialog } from "primereact/confirmdialog"
-import { DataTable } from "primereact/datatable"
+import { DataTable, DataTableFilterMeta } from "primereact/datatable"
 import { Dialog } from "primereact/dialog"
 import { Dropdown } from "primereact/dropdown"
 import { InputSwitch } from "primereact/inputswitch"
@@ -49,6 +49,12 @@ export default function Users() {
     const [permissionsDialog, setPermissionsDialog] = useState(false)
     const [allPermissions, setAllPermissions] = useState([])
     const [departmentPermissions, setDepartmentPermissions] = useState<string[]>([])
+
+    const [filters, setFilters] = useState<DataTableFilterMeta>({
+        name: { value: null, matchMode: "contains" },
+        createdAt: { value: null, matchMode: "contains" },
+        updatedAt: { value: null, matchMode: "contains" },
+    })
 
     useEffect(() => {
         fetchUsers()
@@ -289,6 +295,19 @@ export default function Users() {
         return <InputSwitch checked={isAssigned} onChange={(e) => handlePermissionToggle(userId, e.value)} />
     }
 
+    const rightToolbarTemplate = () => {
+        return (
+            <div className="flex justify-between w-full">
+                <InputText
+                    id="globalFilter"
+                    placeholder="Pesquisar"
+                    onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, global: { value: e.target.value, matchMode: "contains" } })}
+                    className="ml-2"
+                />
+            </div>
+        )
+    }
+
     const userDialogFooter = (
         <>
             <Button label="Cancelar" icon="pi pi-times" className="p-button-danger" onClick={hideDialog} />
@@ -314,8 +333,10 @@ export default function Users() {
             <Navbar />
             <Toast ref={toast} />
             <div className="card">
-                <Toolbar className="p-mb-4 p-toolbar" left={leftToolbarTemplate}></Toolbar>
+                <Toolbar className="p-mb-4 p-toolbar" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
                 <DataTable
+                    filters={filters}
+                    onFilter={(e) => setFilters(e.filters as DataTableFilterMeta)}
                     header="Usuários"
                     style={{
                         width: "100%",

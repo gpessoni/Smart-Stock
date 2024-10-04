@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, SetStateAction } from "react"
 import { Skeleton } from "primereact/skeleton"
-import { DataTable } from "primereact/datatable"
+import { DataTable, DataTableFilterMeta } from "primereact/datatable"
 import { Button } from "primereact/button"
 import { Dialog } from "primereact/dialog"
 import { Toast } from "primereact/toast"
@@ -41,6 +41,11 @@ export default function Departments() {
     const [departmentPermissions, setDepartmentPermissions] = useState<string[]>([])
     const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>("")
 
+    const [filters, setFilters] = useState<DataTableFilterMeta>({
+        name: { value: null, matchMode: "contains" },
+        createdAt: { value: null, matchMode: "contains" },
+        updatedAt: { value: null, matchMode: "contains" },
+    })
     const toast = useRef<Toast>(null)
 
     const getAuthToken = () => {
@@ -125,6 +130,19 @@ export default function Departments() {
     const openPermissionsDialog = (departmentId: Department) => {
         setSelectedDepartmentId(departmentId.id)
         fetchPermissions(departmentId.id)
+    }
+
+    const rightToolbarTemplate = () => {
+        return (
+            <div className="flex justify-between w-full">
+                <InputText
+                    id="globalFilter"
+                    placeholder="Pesquisar"
+                    onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, global: { value: e.target.value, matchMode: "contains" } })}
+                    className="ml-2"
+                />
+            </div>
+        )
     }
 
     const saveDepartment = async () => {
@@ -259,9 +277,12 @@ export default function Departments() {
                 <Toolbar
                     className="p-mb-4 p-toolbar"
                     left={() => <Button label="Novo" icon="pi pi-user-plus" className="p-button-success" onClick={handleNewDepartment} />}
-                    right={() => <InputText id="code" placeholder="Pesquisar" className="ml-2" />}
+                    right={rightToolbarTemplate}
                 />
+
                 <DataTable
+                    filters={filters}
+                    onFilter={(e) => setFilters(e.filters as DataTableFilterMeta)}
                     header="Departamentos"
                     value={departments}
                     paginator

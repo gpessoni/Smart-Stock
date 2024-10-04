@@ -6,7 +6,7 @@ import "primeicons/primeicons.css"
 import { Button } from "primereact/button"
 import { Column } from "primereact/column"
 import { ConfirmDialog } from "primereact/confirmdialog"
-import { DataTable } from "primereact/datatable"
+import { DataTable, DataTableFilterMeta } from "primereact/datatable"
 import { Dialog } from "primereact/dialog"
 import { InputText } from "primereact/inputtext"
 import "primereact/resources/themes/lara-light-cyan/theme.css"
@@ -28,6 +28,11 @@ export default function UnitsMeasurement() {
     const [loading, setLoading] = useState<boolean>(true)
     const [groups, setUnitMeasurements] = useState<UnitMeasurement[]>([])
     const [groupDialog, setUnitMeasurementDialog] = useState<boolean>(false)
+    const [filters, setFilters] = useState<DataTableFilterMeta>({
+        name: { value: null, matchMode: "contains" },
+        createdAt: { value: null, matchMode: "contains" },
+        updatedAt: { value: null, matchMode: "contains" },
+    })
     const [group, setUnitMeasurement] = useState<UnitMeasurement>({
         id: null,
         abbreviation: "",
@@ -76,7 +81,12 @@ export default function UnitsMeasurement() {
     const rightToolbarTemplate = () => {
         return (
             <div className="flex justify-between w-full">
-                <InputText id="abbreviation" placeholder="Pesquisar" className="ml-2" />
+                <InputText
+                    id="globalFilter"
+                    placeholder="Pesquisar"
+                    onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, global: { value: e.target.value, matchMode: "contains" } })}
+                    className="ml-2"
+                />
             </div>
         )
     }
@@ -215,6 +225,8 @@ export default function UnitsMeasurement() {
                 <Toolbar className="p-mb-4 p-toolbar" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
                 <DataTable
                     header="Unidades de Medida de Produtos"
+                    filters={filters}
+                    onFilter={(e) => setFilters(e.filters as DataTableFilterMeta)}
                     style={{
                         width: "100%",
                         overflow: "auto",
