@@ -16,16 +16,17 @@ model Users {
   departmentId String
   department   Departments   @relation(fields: [departmentId], references: [id])
   permissions  Permissions[]
+  Logs         Logs[]
 }
 
 model Permissions {
-  id            String       @id @default(uuid())
-  route         String       @unique
-  description   String
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  Users         Users[]
-  Departments   Departments[]
+  id          String        @id @default(uuid())
+  route       String        @unique
+  description String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  Users       Users[]
+  Departments Departments[]
 }
 
 model Departments {
@@ -192,6 +193,24 @@ model SeparationOrderItem {
   storageAddress    StorageAddress       @relation(fields: [storageAddressId], references: [id])
   quantity          Int
   status            SeparationItemStatus @default(NOT_SEPARATED)
+}
+
+model Logs {
+  id     String  @id @default(uuid())
+  action String
+  type   LogType @default(LIST)
+  userId String
+  user   Users   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum LogType {
+ LIST
+ CREATE
+ DELETE
+ UPDATE
 }
 
 enum SeparationStatus {

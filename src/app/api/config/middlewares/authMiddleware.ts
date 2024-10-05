@@ -1,37 +1,45 @@
 import { NextResponse } from "next/server"
-import jwt from "jsonwebtoken"
+import jwt, { JwtPayload } from "jsonwebtoken" // Importa também JwtPayload
 import { HttpStatus } from "@/app/api/config/http/httpUtils"
 
 const JWT_SECRET = process.env.JWT_SECRET || "defaultsecret"
 
+// Função para validar o token JWT
 export function validateToken(token: string) {
     try {
-        console.log(token)
-        const decoded = jwt.verify(token, JWT_SECRET)
+        const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload // Decodifica o token
         return decoded
     } catch (error) {
         return null
     }
 }
 
-export function authMiddleware(req: Request) {
+// Middleware de autenticação
+export async function authMiddleware(req: Request) {
     const authHeader = req.headers.get("Authorization")
 
     if (!authHeader) {
-        return NextResponse.json({ error: "Token não fornecido" }, { status: HttpStatus.UNAUTHORIZED })
+        return { status: HttpStatus.UNAUTHORIZED, error: "Token não fornecido" }
     }
 
     const token = authHeader.split(" ")[1]
 
     if (!token) {
-        return NextResponse.json({ error: "Token inválido" }, { status: HttpStatus.UNAUTHORIZED })
+        return { status: HttpStatus.UNAUTHORIZED, error: "Token inválido" }
     }
 
     const decoded = validateToken(token)
 
     if (!decoded) {
-        return NextResponse.json({ error: "Token inválido ou expirado" }, { status: HttpStatus.UNAUTHORIZED })
+        return { status: HttpStatus.UNAUTHORIZED, error: "Token inválido ou expirado" }
     }
 
-    return NextResponse.next()
+    // Verifica se o payload contém o campo "id" ou "userId"
+    const userId = decoded.id || (decoded as JwtPayload).userId
+
+    if (!userId) {
+        return { status: HttpStatus.UNAUTHORIZED, error: "ID do usuário não encontrado no token" }
+    }
+
+    return { status: HttpStatus.OK, userId }
 }
