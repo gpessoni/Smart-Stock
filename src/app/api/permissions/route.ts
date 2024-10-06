@@ -29,7 +29,6 @@ export async function POST(req: Request) {
     }
 }
 
-// Rota GET - Visualizar permissões
 export async function GET(req: Request) {
     const authResponse = await authMiddleware(req)
 
