@@ -16,6 +16,9 @@ import { Toast } from "primereact/toast"
 import { Toolbar } from "primereact/toolbar"
 import { useEffect, useRef, useState } from "react"
 import styles from "./../page.module.css"
+import autoTable from "jspdf-autotable"
+import jsPDF from "jspdf"
+import * as XLSX from "xlsx"
 
 type Product = {
     id: string | null
@@ -23,10 +26,36 @@ type Product = {
     description: string
     typeProductId: string | null
     groupProductId: string | null
+    groupProduct?: GroupProduct
+    typeProduct?: ProductType
+    unitOfMeasure?: UnitOfMeasure
     unitOfMeasureId: string | null
     createdAt?: Date
     updatedAt?: Date
     ProductStorageBalances: any | null
+}
+
+type ProductType = {
+    id: string | null
+    description: string
+    createdAt?: Date
+    updatedAt?: Date
+}
+
+type UnitOfMeasure = {
+    id: string | null
+    abbreviation: string
+    description: string
+    createdAt?: Date
+    updatedAt?: Date
+}
+
+type GroupProduct = {
+    id: string | null
+    code: string
+    description: string
+    createdAt?: Date
+    updatedAt?: Date
 }
 
 type DropdownOption = {
@@ -42,6 +71,7 @@ export default function Products() {
         id: null,
         code: "",
         description: "",
+
         typeProductId: null,
         groupProductId: null,
         unitOfMeasureId: null,
@@ -121,6 +151,70 @@ export default function Products() {
         }
     }
 
+    const exportToPDF = () => {
+        const doc = new jsPDF()
+
+        doc.setFontSize(18)
+        doc.text("Detalhes dos Produtos", 14, 22)
+
+        const pdfData = products.map((product) => {
+            const totalSaldo = product.ProductStorageBalances
+                ? product.ProductStorageBalances.reduce((acc: number, balance: any) => acc + (balance.balance || 0), 0)
+                : 0
+
+            return [
+                product.code,
+                product.description,
+                product.groupProduct?.description || "N/A",
+                product.typeProduct?.description || "N/A",
+                product.unitOfMeasure?.abbreviation || "N/A",
+                totalSaldo,
+            ]
+        })
+
+        const headers = ["Código", "Descrição", "Grupo", "Tipo", "Unidade de Medida", "Saldo Total"]
+
+        autoTable(doc, {
+            head: [headers],
+            body: pdfData,
+            startY: 30,
+            theme: "grid",
+        })
+
+        doc.save("detalhes_produtos.pdf")
+    }
+
+    const exportToExcel = () => {
+        const productDetails = products.map((product) => ({
+            ID: product.id,
+            Código: product.code,
+            Descrição: product.description,
+            Grupo: product.groupProduct?.description || "N/A",
+            Tipo: product.typeProduct?.description || "N/A",
+            "Unidade de Medida": product.unitOfMeasure?.abbreviation || "N/A",
+        }))
+
+        const storageBalances = products.flatMap(
+            (product) =>
+                product.ProductStorageBalances?.map((balance: any) => ({
+                    Produto: product.description,
+                    Endereço: balance.storageAddress?.address || "N/A",
+                    Descrição: balance.storageAddress?.description || "N/A",
+                    Saldo: balance.balance || 0,
+                    "Última Atualização": new Date(balance.updatedAt).toLocaleDateString(),
+                })) || []
+        )
+
+        const workbook = XLSX.utils.book_new()
+        const productSheet = XLSX.utils.json_to_sheet(productDetails)
+        const balancesSheet = XLSX.utils.json_to_sheet(storageBalances)
+
+        XLSX.utils.book_append_sheet(workbook, productSheet, "Detalhes dos Produtos")
+        XLSX.utils.book_append_sheet(workbook, balancesSheet, "Saldos de Armazenamento")
+
+        XLSX.writeFile(workbook, "detalhes_produtos.xlsx")
+    }
+
     const leftToolbarTemplate = () => {
         return (
             <div className="flex justify-between w-full">
@@ -137,6 +231,42 @@ export default function Products() {
                     placeholder="Pesquisar"
                     onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, global: { value: e.target.value, matchMode: "contains" } })}
                     className="ml-2"
+                />
+                <Button
+                    label="Exportar Excel"
+                    icon="pi pi-file-excel"
+                    style={{
+                        marginLeft: "10px",
+                        backgroundColor: "#f8f9fa",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "#007bff",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        transition: "background-color 0.3s ease",
+                    }}
+                    className="p-button-info"
+                    onClick={exportToExcel}
+                />
+                <Button
+                    label="Exportar PDF"
+                    icon="pi pi-file-pdf"
+                    style={{
+                        marginLeft: "10px",
+                        backgroundColor: "#f8f9fa",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "#dc3545",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        transition: "background-color 0.3s ease",
+                    }}
+                    className="p-button-danger"
+                    onClick={exportToPDF}
                 />
             </div>
         )
