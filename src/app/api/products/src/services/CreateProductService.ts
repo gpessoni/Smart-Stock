@@ -9,11 +9,11 @@ export async function createProductService(req: Request) {
         const { error } = createProductValidation.validate(body, { abortEarly: false })
 
         if (error) {
-            const errorMessage = error.details.map((detail: { message: any }) => detail.message).join(", ")
+            const errorMessage = error.details.map((detail) => detail.message).join(", ")
             return NextResponse.json({ error: errorMessage }, { status: HttpStatus.BAD_REQUEST })
         }
 
-        const { code, description, typeProductId, groupProductId, unitOfMeasureId } = body
+        const { code, description, typeProductId, groupProductId, unitOfMeasureId, image } = body
 
         const existingProduct = await prisma.products.findFirst({
             where: { code },
@@ -30,11 +30,13 @@ export async function createProductService(req: Request) {
                 typeProductId,
                 groupProductId,
                 unitOfMeasureId,
+                image, 
             },
             select: {
                 id: true,
                 code: true,
                 description: true,
+                image: true,
                 createdAt: true,
                 updatedAt: true,
                 typeProduct: {

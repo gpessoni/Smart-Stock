@@ -68,6 +68,7 @@ model Products {
   id                     String                  @id @default(uuid())
   code                   String                  @unique
   description            String
+  image                  String?
   typeProductId          String
   typeProduct            TypeProducts            @relation(fields: [typeProductId], references: [id])
   groupProductId         String
@@ -207,10 +208,10 @@ model Logs {
 }
 
 enum LogType {
- LIST
- CREATE
- DELETE
- UPDATE
+  LIST
+  CREATE
+  DELETE
+  UPDATE
 }
 
 enum SeparationStatus {

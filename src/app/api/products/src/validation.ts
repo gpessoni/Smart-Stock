@@ -16,9 +16,10 @@ export const createProductValidation = Joi.object({
     typeProductId: Joi.string().uuid().required(),
     groupProductId: Joi.string().uuid().required(),
     unitOfMeasureId: Joi.string().uuid().required(),
-});
-
-export const deleteProductValidation = Joi.string().uuid().required();
+    image: Joi.string().base64().optional().allow(null).messages({
+        "string.base": "Imagem deve estar em formato Base64",
+    }),
+})
 
 export const updateProductValidation = Joi.object({
     code: Joi.string().trim().min(2).max(20).optional().messages({
@@ -34,4 +35,9 @@ export const updateProductValidation = Joi.object({
     typeProductId: Joi.string().uuid().optional(),
     groupProductId: Joi.string().uuid().optional(),
     unitOfMeasureId: Joi.string().uuid().optional(),
-});
+    image: Joi.string().base64().optional().allow(null).messages({
+        "string.base": "Imagem deve estar em formato Base64",
+    }),
+})
+
+export const deleteProductValidation = Joi.string().uuid().required()

@@ -3,12 +3,13 @@ import { NextResponse } from "next/server"
 import { HttpStatus } from "@/app/api/config/http/httpUtils"
 import { updateProductValidation } from "../validation"
 
+
 export async function updateProductService(id: string, body: any) {
     try {
         const { error } = updateProductValidation.validate(body, { abortEarly: false })
 
         if (error) {
-            const errorMessage = error.details.map((detail: { message: any }) => detail.message).join(", ")
+            const errorMessage = error.details.map((detail) => detail.message).join(", ")
             return NextResponse.json({ error: errorMessage }, { status: HttpStatus.BAD_REQUEST })
         }
 
@@ -22,11 +23,12 @@ export async function updateProductService(id: string, body: any) {
 
         const updatedProduct = await prisma.products.update({
             where: { id },
-            data: body,
+            data: body, 
             select: {
                 id: true,
                 code: true,
                 description: true,
+                image: true, 
                 createdAt: true,
                 updatedAt: true,
                 typeProductId: true,

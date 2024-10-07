@@ -23,6 +23,7 @@ import * as XLSX from "xlsx"
 type Product = {
     id: string | null
     code: string
+    image?: string
     description: string
     typeProductId: string | null
     groupProductId: string | null
@@ -82,17 +83,13 @@ export default function Products() {
     const [groupProductOptions, setGroupProductOptions] = useState<DropdownOption[]>([])
     const [unitMeasureOptions, setUnitMeasureOptions] = useState<DropdownOption[]>([])
 
+    const [image, setImage] = useState(null as any)
+
     const [filters, setFilters] = useState<DataTableFilterMeta>({
         name: { value: null, matchMode: "contains" },
         createdAt: { value: null, matchMode: "contains" },
         updatedAt: { value: null, matchMode: "contains" },
     })
-
-    const onFilterChange = (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
-        const newFilters: any = { ...filters }
-        newFilters[field].value = e.target.value
-        setFilters(newFilters)
-    }
 
     const [visible, setVisible] = useState(false)
     const toast = useRef<Toast>(null)
@@ -148,6 +145,17 @@ export default function Products() {
         } catch (error) {
             console.error("Erro ao buscar opções de dropdown:", error)
             toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar opções", life: 3000 })
+        }
+    }
+
+    const handleImageChange = (e: any) => {
+        const file = e.target.files[0]
+        if (file) {
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                setImage(reader.result)
+            }
+            reader.readAsDataURL(file)
         }
     }
 
@@ -275,6 +283,7 @@ export default function Products() {
     const openNew = () => {
         setProduct({ id: null, code: "", description: "", typeProductId: null, groupProductId: null, unitOfMeasureId: null, ProductStorageBalances: null })
         setSubmitted(false)
+        setImage(null)
         setProductDialog(true)
     }
 
@@ -292,19 +301,22 @@ export default function Products() {
                 console.log("Payload enviado:", JSON.stringify(product))
 
                 const isUpdating = !!product.id
+                const payload = {
+                    code: product.code,
+                    description: product.description,
+                    typeProductId: product.typeProductId,
+                    groupProductId: product.groupProductId,
+                    unitOfMeasureId: product.unitOfMeasureId,
+                    image: image ? image.split(",")[1] : null,
+                }
+
                 const response = await fetch(isUpdating ? `/api/products/${product.id}` : "/api/products", {
                     method: isUpdating ? "PATCH" : "POST",
                     headers: {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${getAuthToken()}`,
                     },
-                    body: JSON.stringify({
-                        code: product.code,
-                        description: product.description,
-                        typeProductId: product.typeProductId,
-                        groupProductId: product.groupProductId,
-                        unitOfMeasureId: product.unitOfMeasureId,
-                    }),
+                    body: JSON.stringify(payload),
                 })
 
                 if (!response.ok) {
@@ -361,8 +373,8 @@ export default function Products() {
     }
 
     const editProduct = (product: Product) => {
-        console.log(product)
         setProduct({ ...product })
+        setImage(`data:image/jpeg;base64,${product.image}`)
         setProductDialog(true)
     }
 
@@ -433,6 +445,33 @@ export default function Products() {
                     rows={7}
                     rowsPerPageOptions={[7, 10, 25, 50]}
                 >
+                    <Column
+                        header="Imagem"
+                        body={(rowData) => {
+                            const imageSrc = rowData.image ? `data:image/jpeg;base64,${rowData.image}` : ""
+                            return (
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        height: "80px",
+                                        width: "80px",
+                                        backgroundColor: rowData.image ? "transparent" : "#f0f0f0",
+                                        borderRadius: "4px",
+                                        overflow: "hidden",
+                                    }}
+                                >
+                                    {rowData.image ? (
+                                        <img src={imageSrc} alt={rowData.description} style={{ maxWidth: "100%", maxHeight: "100%" }} />
+                                    ) : (
+                                        <i className="pi pi-image" style={{ fontSize: "2em", color: "#888" }}></i>
+                                    )}
+                                </div>
+                            )
+                        }}
+                    ></Column>
+
                     <Column field="code" header="Código"></Column>
                     <Column field="description" header="Descrição"></Column>
                     <Column field="typeProduct.description" header="Tipo de Produto"></Column>
@@ -495,6 +534,30 @@ export default function Products() {
                     footer={productDialogFooter}
                     onHide={hideDialog}
                 >
+                    <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.5rem" }}>
+                        <label
+                            htmlFor="image-upload"
+                            style={{
+                                cursor: "pointer",
+                                borderRadius: "50%",
+                                overflow: "hidden",
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                width: "100px",
+                                height: "100px",
+                                backgroundColor: image ? "transparent" : "#f0f0f0",
+                            }}
+                        >
+                            {image ? (
+                                <img src={image} alt="Produto" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ) : (
+                                <i className="pi pi-image" style={{ fontSize: "2em", color: "#888" }}></i>
+                            )}
+                            <input id="image-upload" type="file" accept="image/png, image/jpeg" style={{ display: "none" }} onChange={handleImageChange} />
+                        </label>
+                    </div>
+
                     <div className="p-field" style={{ marginBottom: "1.5rem" }}>
                         <label htmlFor="code" style={{ marginBottom: "0.5rem", display: "block" }}>
                             Código
