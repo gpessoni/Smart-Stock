@@ -2,6 +2,8 @@
 
 import DeleteButton from "@/components/Forms/DeleteButton"
 import Navbar from "@/components/Navbar"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
 import "primeicons/primeicons.css"
 import { Button } from "primereact/button"
 import { Column } from "primereact/column"
@@ -14,6 +16,7 @@ import { Skeleton } from "primereact/skeleton"
 import { Toast } from "primereact/toast"
 import { Toolbar } from "primereact/toolbar"
 import { useEffect, useRef, useState } from "react"
+import * as XLSX from "xlsx"
 import styles from "./../page.module.css"
 
 type UnitMeasurement = {
@@ -86,6 +89,42 @@ export default function UnitsMeasurement() {
                     placeholder="Pesquisar"
                     onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, global: { value: e.target.value, matchMode: "contains" } })}
                     className="ml-2"
+                />
+                <Button
+                    label="Exportar Excel"
+                    icon="pi pi-file-excel"
+                    style={{
+                        marginLeft: "10px",
+                        backgroundColor: "#f8f9fa",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "#007bff",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        transition: "background-color 0.3s ease",
+                    }}
+                    className="p-button-info"
+                    onClick={exportToExcel}
+                />
+                <Button
+                    label="Exportar PDF"
+                    icon="pi pi-file-pdf"
+                    style={{
+                        marginLeft: "10px",
+                        backgroundColor: "#f8f9fa",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "#dc3545",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        transition: "background-color 0.3s ease",
+                    }}
+                    className="p-button-danger"
+                    onClick={exportToPDF}
                 />
             </div>
         )
@@ -200,6 +239,46 @@ export default function UnitsMeasurement() {
                 life: 3000,
             })
         }
+    }
+
+    const exportToPDF = () => {
+        const doc = new jsPDF()
+
+        doc.setFontSize(18)
+        doc.text("Relatório de Unidades de Medida", 14, 22)
+
+        const pdfData = groups.map((group) => [
+            group.abbreviation,
+            group.description,
+            new Date(group.createdAt!).toLocaleDateString(),
+            new Date(group.updatedAt!).toLocaleDateString(),
+        ])
+
+        const headers = ["Unidade de Medida", "Descrição", "Data de Criação", "Data de Atualização"]
+
+        autoTable(doc, {
+            head: [headers],
+            body: pdfData,
+            startY: 30,
+            theme: "grid",
+        })
+
+        doc.save("relatorio_unidades_medida.pdf")
+    }
+
+    const exportToExcel = () => {
+        const excelData = groups.map((group) => ({
+            "Unidade de Medida": group.abbreviation,
+            Descrição: group.description,
+            "Data de Criação": new Date(group.createdAt!).toLocaleDateString(),
+            "Data de Atualização": new Date(group.updatedAt!).toLocaleDateString(),
+        }))
+
+        const worksheet = XLSX.utils.json_to_sheet(excelData)
+        const workbook = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Unidades de Medida")
+
+        XLSX.writeFile(workbook, "relatorio_unidades_medida.xlsx")
     }
 
     const groupDialogFooter = (

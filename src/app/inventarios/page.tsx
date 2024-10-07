@@ -2,6 +2,8 @@
 
 import DeleteButton from "@/components/Forms/DeleteButton"
 import Navbar from "@/components/Navbar"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
 import "primeicons/primeicons.css"
 import { Button } from "primereact/button"
 import { Column } from "primereact/column"
@@ -15,6 +17,7 @@ import { Skeleton } from "primereact/skeleton"
 import { Toast } from "primereact/toast"
 import { Toolbar } from "primereact/toolbar"
 import { useEffect, useRef, useState } from "react"
+import * as XLSX from "xlsx"
 
 type Inventory = {
     id: string
@@ -145,7 +148,7 @@ export default function Inventories() {
             toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao buscar endereços", life: 3000 })
         }
     }
-    
+
     const handleStorageChange = (e: any) => {
         const storageId = e.value
         setSelectedStorageId(storageId)
@@ -266,6 +269,60 @@ export default function Inventories() {
         )
     }
 
+    const exportToPDF = () => {
+        const doc = new jsPDF()
+
+        doc.setFontSize(18)
+        doc.text("Relatório de Solicitações de Estoque", 14, 22)
+
+        const pdfData = inventories.map((request) => [
+            request.product.code,
+            request.product.description,
+            request.storageAddress.address,
+            request.quantity,
+            request.status,
+            new Date(request.createdAt).toLocaleDateString(),
+            new Date(request.updatedAt).toLocaleDateString(),
+        ])
+
+        const headers = [
+            "Código do Produto",
+            "Descrição do Produto",
+            "Endereço de Armazenagem",
+            "Quantidade",
+            "Status",
+            "Data de Criação",
+            "Data de Atualização",
+        ]
+
+        autoTable(doc, {
+            head: [headers],
+            body: pdfData,
+            startY: 30,
+            theme: "grid",
+        })
+
+        doc.save("relatorio_solicitacoes_estoque.pdf")
+    }
+
+    const exportToExcel = () => {
+        const excelData = inventories.map((request) => ({
+            "Código do Produto": request.product.code,
+            "Descrição do Produto": request.product.description,
+            "Endereço de Armazenagem": request.storageAddress.address,
+            Quantidade: request.quantity,
+            Status: request.status,
+            "Data de Criação": new Date(request.createdAt).toLocaleDateString(),
+            "Data de Atualização": new Date(request.updatedAt).toLocaleDateString(),
+        }))
+
+        const worksheet = XLSX.utils.json_to_sheet(excelData)
+        const workbook = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Solicitações de Estoque")
+
+        XLSX.writeFile(workbook, "relatorio_solicitacoes_estoque.xlsx")
+    }
+
     const rightToolbarTemplate = () => {
         return (
             <div className="flex justify-between w-full">
@@ -274,6 +331,42 @@ export default function Inventories() {
                     placeholder="Pesquisar"
                     onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, global: { value: e.target.value, matchMode: "contains" } })}
                     className="ml-2"
+                />
+                <Button
+                    label="Exportar Excel"
+                    icon="pi pi-file-excel"
+                    style={{
+                        marginLeft: "10px",
+                        backgroundColor: "#f8f9fa",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "#007bff",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        transition: "background-color 0.3s ease",
+                    }}
+                    className="p-button-info"
+                    onClick={exportToExcel}
+                />
+                <Button
+                    label="Exportar PDF"
+                    icon="pi pi-file-pdf"
+                    style={{
+                        marginLeft: "10px",
+                        backgroundColor: "#f8f9fa",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "#dc3545",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        transition: "background-color 0.3s ease",
+                    }}
+                    className="p-button-danger"
+                    onClick={exportToPDF}
                 />
             </div>
         )
@@ -441,7 +534,9 @@ export default function Inventories() {
                                 onChange={(e) => setInventory({ ...inventory, storageAddressId: e.value })}
                                 placeholder="Selecione um endereço"
                             />
-                            {submitted && storageAddressOptions.length === 0 && !inventory.storageAddressId && <small className="p-invalid">Endereço é obrigatório.</small>}
+                            {submitted && storageAddressOptions.length === 0 && !inventory.storageAddressId && (
+                                <small className="p-invalid">Endereço é obrigatório.</small>
+                            )}
                         </div>
                     )}
 

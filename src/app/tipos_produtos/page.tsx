@@ -1,20 +1,23 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { Skeleton } from "primereact/skeleton"
-import { DataTable, DataTableFilterMeta } from "primereact/datatable"
-import { Button } from "primereact/button"
-import { Dialog } from "primereact/dialog"
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog"
-import { InputText } from "primereact/inputtext"
-import { Toast } from "primereact/toast"
-import Navbar from "@/components/Navbar"
-import styles from "./../page.module.css"
-import { Column } from "primereact/column"
-import "primereact/resources/themes/lara-light-cyan/theme.css"
-import "primeicons/primeicons.css"
-import { Toolbar } from "primereact/toolbar"
 import DeleteButton from "@/components/Forms/DeleteButton"
+import Navbar from "@/components/Navbar"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
+import "primeicons/primeicons.css"
+import { Button } from "primereact/button"
+import { Column } from "primereact/column"
+import { ConfirmDialog } from "primereact/confirmdialog"
+import { DataTable, DataTableFilterMeta } from "primereact/datatable"
+import { Dialog } from "primereact/dialog"
+import { InputText } from "primereact/inputtext"
+import "primereact/resources/themes/lara-light-cyan/theme.css"
+import { Skeleton } from "primereact/skeleton"
+import { Toast } from "primereact/toast"
+import { Toolbar } from "primereact/toolbar"
+import { useEffect, useRef, useState } from "react"
+import * as XLSX from "xlsx"
+import styles from "./../page.module.css"
 
 type productTypeProduct = {
     id: string | null
@@ -67,14 +70,6 @@ export default function productTypeProducts() {
                 life: 3000,
             })
         }
-    }
-
-    const leftToolbarTemplate = () => {
-        return (
-            <div className="flex justify-between w-full">
-                <Button label="Novo" icon="pi pi-user-plus" className="p-button-success" onClick={openNew} />
-            </div>
-        )
     }
 
     const openNew = () => {
@@ -185,6 +180,44 @@ export default function productTypeProducts() {
         }
     }
 
+    const exportToPDF = () => {
+        const doc = new jsPDF()
+
+        doc.setFontSize(18)
+        doc.text("Relatório de Unidades de Medida", 14, 22)
+
+        const pdfData = productTypes.map((group) => [
+            group.description,
+            new Date(group.createdAt!).toLocaleDateString(),
+            new Date(group.updatedAt!).toLocaleDateString(),
+        ])
+
+        const headers = ["Descrição", "Data de Criação", "Data de Atualização"]
+
+        autoTable(doc, {
+            head: [headers],
+            body: pdfData,
+            startY: 30,
+            theme: "grid",
+        })
+
+        doc.save("relatorio_unidades_medida.pdf")
+    }
+
+    const exportToExcel = () => {
+        const excelData = productTypes.map((group) => ({
+            Descrição: group.description,
+            "Data de Criação": new Date(group.createdAt!).toLocaleDateString(),
+            "Data de Atualização": new Date(group.updatedAt!).toLocaleDateString(),
+        }))
+
+        const worksheet = XLSX.utils.json_to_sheet(excelData)
+        const workbook = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Unidades de Medida")
+
+        XLSX.writeFile(workbook, "relatorio_unidades_medida.xlsx")
+    }
+
     const rightToolbarTemplate = () => {
         return (
             <div className="flex justify-between w-full">
@@ -194,6 +227,50 @@ export default function productTypeProducts() {
                     onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, global: { value: e.target.value, matchMode: "contains" } })}
                     className="ml-2"
                 />
+                <Button
+                    label="Exportar Excel"
+                    icon="pi pi-file-excel"
+                    style={{
+                        marginLeft: "10px",
+                        backgroundColor: "#f8f9fa",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "#007bff",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        transition: "background-color 0.3s ease",
+                    }}
+                    className="p-button-info"
+                    onClick={exportToExcel}
+                />
+                <Button
+                    label="Exportar PDF"
+                    icon="pi pi-file-pdf"
+                    style={{
+                        marginLeft: "10px",
+                        backgroundColor: "#f8f9fa",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "#dc3545",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        transition: "background-color 0.3s ease",
+                    }}
+                    className="p-button-danger"
+                    onClick={exportToPDF}
+                />
+            </div>
+        )
+    }
+
+    const leftToolbarTemplate = () => {
+        return (
+            <div className="flex justify-between w-full">
+                <Button label="Novo" icon="pi pi-user-plus" className="p-button-success" onClick={openNew} />
             </div>
         )
     }

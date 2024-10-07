@@ -2,6 +2,8 @@
 
 import DeleteButton from "@/components/Forms/DeleteButton"
 import Navbar from "@/components/Navbar"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
 import "primeicons/primeicons.css"
 import { Button } from "primereact/button"
 import { Column } from "primereact/column"
@@ -17,6 +19,7 @@ import { Skeleton } from "primereact/skeleton"
 import { Toast } from "primereact/toast"
 import { Toolbar } from "primereact/toolbar"
 import { useEffect, useRef, useState } from "react"
+import * as XLSX from "xlsx"
 import styles from "./../page.module.css"
 
 type Department = {
@@ -295,6 +298,46 @@ export default function Users() {
         return <InputSwitch checked={isAssigned} onChange={(e) => handlePermissionToggle(userId, e.value)} />
     }
 
+    const exportToPDF = () => {
+        const doc = new jsPDF()
+
+        doc.setFontSize(18)
+        doc.text("Relatório de Usuários", 14, 22)
+
+        const pdfData = users.map((user) => [
+            user.username,
+            user.department.description,
+            new Date(user.createdAt!).toLocaleDateString(),
+            new Date(user.updatedAt!).toLocaleDateString(),
+        ])
+
+        const headers = ["Nome de Usuário", "Departamento", "Data de Criação", "Data de Atualização"]
+
+        autoTable(doc, {
+            head: [headers],
+            body: pdfData,
+            startY: 30,
+            theme: "grid",
+        })
+
+        doc.save("relatorio_usuarios.pdf")
+    }
+
+    const exportToExcel = () => {
+        const excelData = users.map((user) => ({
+            "Nome de Usuário": user.username,
+            Departamento: user.department.description,
+            "Data de Criação": new Date(user.createdAt!).toLocaleDateString(),
+            "Data de Atualização": new Date(user.updatedAt!).toLocaleDateString(),
+        }))
+
+        const worksheet = XLSX.utils.json_to_sheet(excelData)
+        const workbook = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Usuários")
+
+        XLSX.writeFile(workbook, "relatorio_usuarios.xlsx")
+    }
+
     const rightToolbarTemplate = () => {
         return (
             <div className="flex justify-between w-full">
@@ -303,6 +346,42 @@ export default function Users() {
                     placeholder="Pesquisar"
                     onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, global: { value: e.target.value, matchMode: "contains" } })}
                     className="ml-2"
+                />
+                <Button
+                    label="Exportar Excel"
+                    icon="pi pi-file-excel"
+                    style={{
+                        marginLeft: "10px",
+                        backgroundColor: "#f8f9fa",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "#007bff",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        transition: "background-color 0.3s ease",
+                    }}
+                    className="p-button-info"
+                    onClick={exportToExcel}
+                />
+                <Button
+                    label="Exportar PDF"
+                    icon="pi pi-file-pdf"
+                    style={{
+                        marginLeft: "10px",
+                        backgroundColor: "#f8f9fa",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "#dc3545",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        transition: "background-color 0.3s ease",
+                    }}
+                    className="p-button-danger"
+                    onClick={exportToPDF}
                 />
             </div>
         )

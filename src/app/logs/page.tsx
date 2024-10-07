@@ -11,6 +11,10 @@ import { useEffect, useRef, useState } from "react"
 import styles from "./../page.module.css"
 import { Toolbar } from "primereact/toolbar"
 import { InputText } from "primereact/inputtext"
+import { Button } from "primereact/button"
+import * as XLSX from "xlsx"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
 
 type Log = {
     id: string
@@ -77,15 +81,15 @@ export default function Logs() {
         const getBadgeStyle = (type: string) => {
             switch (type) {
                 case "CREATE":
-                    return { backgroundColor: "#4caf50", color: "#fff" } // verde
+                    return { backgroundColor: "#4caf50", color: "#fff" }
                 case "UPDATE":
-                    return { backgroundColor: "#ff9800", color: "#fff" } // laranja
+                    return { backgroundColor: "#ff9800", color: "#fff" }
                 case "DELETE":
-                    return { backgroundColor: "#f44336", color: "#fff" } // vermelho
+                    return { backgroundColor: "#f44336", color: "#fff" }
                 case "LIST":
-                    return { backgroundColor: "#2196f3", color: "#fff" } // azul
+                    return { backgroundColor: "#2196f3", color: "#fff" }
                 default:
-                    return { backgroundColor: "#9e9e9e", color: "#fff" } // cinza
+                    return { backgroundColor: "#9e9e9e", color: "#fff" }
             }
         }
 
@@ -103,6 +107,48 @@ export default function Logs() {
         )
     }
 
+    const exportToPDF = () => {
+        const doc = new jsPDF()
+
+        doc.setFontSize(18)
+        doc.text("Relatório de Logs de Ações", 14, 22)
+
+        const pdfData = logs.map((log) => [
+            log.user.username,
+            log.action,
+            log.type,
+            new Date(log.createdAt).toLocaleDateString(),
+            new Date(log.updatedAt).toLocaleDateString(),
+        ])
+
+        const headers = ["Usuário", "Ação", "Tipo", "Data de Criação", "Data de Atualização"]
+
+        autoTable(doc, {
+            head: [headers],
+            body: pdfData,
+            startY: 30,
+            theme: "grid",
+        })
+
+        doc.save("relatorio_logs_acoes.pdf")
+    }
+
+    const exportToExcel = () => {
+        const excelData = logs.map((log) => ({
+            Usuário: log.user.username,
+            Ação: log.action,
+            Tipo: log.type,
+            "Data de Criação": new Date(log.createdAt).toLocaleDateString(),
+            "Data de Atualização": new Date(log.updatedAt).toLocaleDateString(),
+        }))
+
+        const worksheet = XLSX.utils.json_to_sheet(excelData)
+        const workbook = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Logs de Ações")
+
+        XLSX.writeFile(workbook, "relatorio_logs_acoes.xlsx")
+    }
+
     const rightToolbarTemplate = () => {
         return (
             <div className="flex justify-between w-full">
@@ -111,6 +157,42 @@ export default function Logs() {
                     placeholder="Pesquisar"
                     onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, global: { value: e.target.value, matchMode: "contains" } })}
                     className="ml-2"
+                />
+                <Button
+                    label="Exportar Excel"
+                    icon="pi pi-file-excel"
+                    style={{
+                        marginLeft: "10px",
+                        backgroundColor: "#f8f9fa",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "#007bff",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        transition: "background-color 0.3s ease",
+                    }}
+                    className="p-button-info"
+                    onClick={exportToExcel}
+                />
+                <Button
+                    label="Exportar PDF"
+                    icon="pi pi-file-pdf"
+                    style={{
+                        marginLeft: "10px",
+                        backgroundColor: "#f8f9fa",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "#dc3545",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        transition: "background-color 0.3s ease",
+                    }}
+                    className="p-button-danger"
+                    onClick={exportToPDF}
                 />
             </div>
         )

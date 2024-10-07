@@ -118,6 +118,7 @@ const Navbar = () => {
                             <S.OptionItem href="/usuarios">Usuários</S.OptionItem>
                             <S.OptionItem href="/permissoes">Permissões</S.OptionItem>
                             <S.OptionItem href="/departamentos">Departamentos</S.OptionItem>
+                            <S.OptionItem href="/logs">Logs</S.OptionItem>
                         </S.OptionsMenuUsers>
                     </S.OptionsContainer>
                 </>
