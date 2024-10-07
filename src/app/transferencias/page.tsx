@@ -1,7 +1,7 @@
 "use client"
 
-import DeleteButton from "@/components/Forms/DeleteButton"
 import Navbar from "@/components/Navbar"
+import { jsPDF } from "jspdf"
 import "primeicons/primeicons.css"
 import { Button } from "primereact/button"
 import { Chip } from "primereact/chip"
@@ -14,7 +14,9 @@ import { InputText } from "primereact/inputtext"
 import "primereact/resources/themes/lara-light-cyan/theme.css"
 import { Toast } from "primereact/toast"
 import { Toolbar } from "primereact/toolbar"
+import autoTable from "jspdf-autotable"
 import { useEffect, useRef, useState } from "react"
+import * as XLSX from "xlsx"
 
 type Transfer = {
     id: string
@@ -72,7 +74,6 @@ export default function Transfers() {
     const [selectedFromStorageId, setSelectedFromStorageId] = useState<string | null>(null)
     const [selectedToStorageId, setSelectedToStorageId] = useState<string | null>(null)
     const [selectedTransfer, setSelectedTransfer] = useState<Transfer | null>(null)
-
 
     const [filters, setFilters] = useState<DataTableFilterMeta>({
         name: { value: null, matchMode: "contains" },
@@ -321,6 +322,80 @@ export default function Transfers() {
         }
     }
 
+    const exportToPDF = () => {
+        const doc = new jsPDF()
+
+        doc.setFontSize(18)
+        doc.text("Transferências", 14, 22)
+
+        const pdfData = transfers.map((transfer) => [
+            transfer.id,
+            transfer.product.description,
+            transfer.product.code,
+            transfer.quantity,
+            transfer.fromAddress.address,
+            transfer.toAddress.address,
+            new Date(transfer.createdAt).toLocaleDateString(),
+        ])
+
+        const headers = ["ID", "Produto", "Código do Produto", "Quantidade", "Endereço de Origem", "Endereço de Destino", "Data de Criação"]
+
+        autoTable(doc, {
+            head: [headers],
+            body: pdfData,
+            startY: 30,
+            theme: "grid", 
+        })
+
+        doc.save("transferencias.pdf")
+    }
+
+    const exportToExcel = () => {
+        const formattedData = transfers.map((transfer) => ({
+            ID: transfer.id,
+            Produto: transfer.product.description,
+            "Código do Produto": transfer.product.code,
+            Quantidade: transfer.quantity,
+            "Endereço de Origem": transfer.fromAddress.address,
+            "Endereço de Destino": transfer.toAddress.address,
+            "Data de Criação": new Date(transfer.createdAt).toLocaleDateString(),
+        }))
+
+        const ws = XLSX.utils.json_to_sheet(formattedData)
+
+        const header = ws["!ref"]
+        for (let col in ws) {
+            if (col[0] === "!") continue
+            ws[col].s = {
+                font: {
+                    bold: true,
+                    color: { rgb: "FFFFFF" },
+                },
+                fill: {
+                    fgColor: { rgb: "4F81BD" },
+                },
+            }
+        }
+
+        for (let cell in ws) {
+            if (cell[0] === "!") continue
+            ws[cell].s = {
+                ...ws[cell].s,
+                border: {
+                    top: { style: "thin", color: { rgb: "000000" } },
+                    bottom: { style: "thin", color: { rgb: "000000" } },
+                    left: { style: "thin", color: { rgb: "000000" } },
+                    right: { style: "thin", color: { rgb: "000000" } },
+                },
+            }
+        }
+
+        const wb = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(wb, ws, "Transferências")
+
+        XLSX.writeFile(wb, "transferencias.xlsx")
+    }
+
     const transferDialogFooter = (
         <div>
             <Button label="Cancelar" icon="pi pi-times" className="p-button-danger" onClick={hideDialog} />
@@ -345,6 +420,42 @@ export default function Transfers() {
                     onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, global: { value: e.target.value, matchMode: "contains" } })}
                     className="ml-2"
                 />
+                <Button
+                    label="Exportar Excel"
+                    icon="pi pi-file-excel"
+                    style={{
+                        marginLeft: "10px",
+                        backgroundColor: "#f8f9fa",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "#007bff",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        transition: "background-color 0.3s ease",
+                    }}
+                    className="p-button-info"
+                    onClick={exportToExcel}
+                />
+                <Button
+                    label="Exportar PDF"
+                    icon="pi pi-file-pdf"
+                    style={{
+                        marginLeft: "10px",
+                        backgroundColor: "#f8f9fa",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "#dc3545",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        transition: "background-color 0.3s ease",
+                    }}
+                    className="p-button-danger"
+                    onClick={exportToPDF}
+                />
             </div>
         )
     }
@@ -354,11 +465,11 @@ export default function Transfers() {
             <Navbar />
             <Toolbar className="p-mb-4 p-toolbar" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
             <DataTable
-            filters={filters}
-            onFilter={(e) => setFilters(e.filters as DataTableFilterMeta)}
+                filters={filters}
+                onFilter={(e) => setFilters(e.filters as DataTableFilterMeta)}
                 style={{
                     width: "100%",
-                    overflow: "auto",   
+                    overflow: "auto",
                     border: "1px solid #ccc",
                 }}
                 value={transfers}
