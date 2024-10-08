@@ -6,7 +6,6 @@ const JWT_SECRET = process.env.JWT_SECRET || "defaultsecret"
 
 export function validateToken(token: string) {
     try {
-        console.log(token)
         const decoded = jwt.verify(token, JWT_SECRET)
         return decoded
     } catch (error) {

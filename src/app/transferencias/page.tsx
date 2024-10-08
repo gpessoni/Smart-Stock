@@ -344,7 +344,7 @@ export default function Transfers() {
             head: [headers],
             body: pdfData,
             startY: 30,
-            theme: "grid", 
+            theme: "grid",
         })
 
         doc.save("transferencias.pdf")
@@ -476,6 +476,32 @@ export default function Transfers() {
                 loading={loading}
                 selectionMode="single"
             >
+                <Column
+                    header="Imagem"
+                    body={(rowData) => {
+                        const imageSrc = rowData.product.image ? `data:image/jpeg;base64,${rowData.product.image}` : ""
+                        return (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    height: "80px",
+                                    width: "80px",
+                                    backgroundColor: rowData.product.image ? "transparent" : "#f0f0f0",
+                                    borderRadius: "4px",
+                                    overflow: "hidden",
+                                }}
+                            >
+                                {rowData.product.image ? (
+                                    <img src={imageSrc} alt={rowData.product.description} style={{ maxWidth: "100%", maxHeight: "100%" }} />
+                                ) : (
+                                    <i className="pi pi-image" style={{ fontSize: "2em", color: "#888" }}></i>
+                                )}
+                            </div>
+                        )
+                    }}
+                ></Column>
                 <Column align="center" sortable field="product.code" header="Produto" />
                 <Column align="center" sortable field="product.description" header="Descrição" />
                 <Column align="center" sortable field="fromAddress.address" header="De" />
