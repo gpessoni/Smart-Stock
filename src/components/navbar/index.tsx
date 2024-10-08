@@ -91,8 +91,8 @@ const Navbar = () => {
                     <S.NavLink href="/dashboards">Dashboards</S.NavLink>
                     <S.NavLink href="/inventarios">Inventários</S.NavLink>
                     <S.NavLink href="/produtos">Produtos</S.NavLink>
-                    <S.NavLink href="/estoques">Solicitações ao Almoxarifado</S.NavLink>
                     <S.NavLink href="/transferencias">Transferências</S.NavLink>
+                    <S.NavLink  href="/armazens">Armázens e Endereços</S.NavLink >
                 </S.NavLinks>
             )}
 
@@ -108,7 +108,6 @@ const Navbar = () => {
                         </S.CogIcon>
 
                         <S.OptionsMenu showOptions={showOptions}>
-                            <S.OptionItem href="/armazens">Armázens e Endereços</S.OptionItem>
                             <S.OptionItem href="/grupos_produtos">Grupos de Produtos</S.OptionItem>
                             <S.OptionItem href="/tipos_produtos">Tipos de Produtos</S.OptionItem>
                             <S.OptionItem href="/unidades_medida">Unidades de Medidas</S.OptionItem>

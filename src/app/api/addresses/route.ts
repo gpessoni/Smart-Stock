@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server"
 import { HttpStatus } from "../config/http/httpUtils"
+import { authMiddleware } from "../config/middlewares/authMiddleware"
+import { logMiddleware } from "../config/middlewares/logMiddleware"
 import { createStorageAddressService } from "./src/services/CreateStorageAddressService"
 import { listStorageAddressesService } from "./src/services/ListStorageAddressesService"
-import { authMiddleware } from "../config/middlewares/authMiddleware"
 
 export async function POST(req: Request) {
     const authResponse = authMiddleware(req)
@@ -11,6 +12,7 @@ export async function POST(req: Request) {
     }
 
     try {
+        await logMiddleware(req, "Criou Endereço", "CREATE")
         return await createStorageAddressService(req)
     } catch (error) {
         return NextResponse.json({ message: "Erro no servidor", error: (error as Error).message }, { status: HttpStatus.INTERNAL_SERVER_ERROR })

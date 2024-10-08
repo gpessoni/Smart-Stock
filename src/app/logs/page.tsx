@@ -12,6 +12,8 @@ import styles from "./../page.module.css"
 import { Toolbar } from "primereact/toolbar"
 import { InputText } from "primereact/inputtext"
 import { Button } from "primereact/button"
+import { Calendar } from "primereact/calendar"
+import { Dropdown } from "primereact/dropdown"
 import * as XLSX from "xlsx"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
@@ -29,14 +31,22 @@ type Log = {
     }
 }
 
+type UserOption = {
+    label: string
+    value: string
+}
+
 export default function Logs() {
     const [loading, setLoading] = useState<boolean>(true)
     const [logs, setLogs] = useState<Log[]>([])
-    const [filters, setFilters] = useState<DataTableFilterMeta>({
-        action: { value: null, matchMode: "contains" },
-        type: { value: null, matchMode: "contains" },
-        createdAt: { value: null, matchMode: "contains" },
+    const [filteredLogs, setFilteredLogs] = useState<Log[]>([])
+    const [filters, setFilters] = useState({
+        text: "",
+        user: null as string | null,
+        startDate: null as Date | null,
+        endDate: null as Date | null,
     })
+    const [users, setUsers] = useState<UserOption[]>([])
     const toast = useRef<Toast>(null)
 
     const getAuthToken = () => {
@@ -45,6 +55,7 @@ export default function Logs() {
 
     useEffect(() => {
         fetchLogs()
+        fetchUsers()
     }, [])
 
     const fetchLogs = async () => {
@@ -56,6 +67,7 @@ export default function Logs() {
             })
             const data = await response.json()
             setLogs(data)
+            setFilteredLogs(data) // Definindo logs filtrados como todos inicialmente
         } catch (error) {
             console.error("Erro ao buscar logs:", error)
             toast.current?.show({
@@ -69,42 +81,49 @@ export default function Logs() {
         }
     }
 
-    if (loading) {
-        return (
-            <div className={styles.skeletonContainer}>
-                <Skeleton shape="rectangle" width="100%" height="100vh" />
-            </div>
-        )
+    const fetchUsers = async () => {
+        try {
+            const response = await fetch("/api/users", {
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                },
+            })
+            const data = await response.json()
+            const userOptions = data.map((user: any) => ({
+                label: user.username,
+                value: user.id,
+            }))
+            setUsers(userOptions)
+        } catch (error) {
+            console.error("Erro ao buscar usuários:", error)
+        }
     }
 
-    const LogBadge: React.FC<any> = ({ type }) => {
-        const getBadgeStyle = (type: string) => {
-            switch (type) {
-                case "CREATE":
-                    return { backgroundColor: "#4caf50", color: "#fff" }
-                case "UPDATE":
-                    return { backgroundColor: "#ff9800", color: "#fff" }
-                case "DELETE":
-                    return { backgroundColor: "#f44336", color: "#fff" }
-                case "LIST":
-                    return { backgroundColor: "#2196f3", color: "#fff" }
-                default:
-                    return { backgroundColor: "#9e9e9e", color: "#fff" }
-            }
+    const filterLogs = () => {
+        let filtered = logs
+
+        if (filters.text) {
+            filtered = filtered.filter(
+                (log) =>
+                    log.action.toLowerCase().includes(filters.text.toLowerCase()) ||
+                    log.type.toLowerCase().includes(filters.text.toLowerCase()) ||
+                    log.user.username.toLowerCase().includes(filters.text.toLowerCase())
+            )
         }
 
-        return (
-            <span
-                style={{
-                    padding: "0.5em 1em",
-                    borderRadius: "1em",
-                    display: "inline-block",
-                    ...getBadgeStyle(type),
-                }}
-            >
-                {type}
-            </span>
-        )
+        if (filters.user) {
+            filtered = filtered.filter((log) => log.userId === filters.user)
+        }
+
+        // Filtro por intervalo de datas
+        if (filters.startDate && filters.endDate) {
+            filtered = filtered.filter((log) => {
+                const logDate = new Date(log.createdAt)
+                return logDate >= filters.startDate && logDate <= filters.endDate
+            })
+        }
+
+        setFilteredLogs(filtered)
     }
 
     const exportToPDF = () => {
@@ -149,14 +168,64 @@ export default function Logs() {
         XLSX.writeFile(workbook, "relatorio_logs_acoes.xlsx")
     }
 
+    useEffect(() => {
+        filterLogs()
+    }, [filters])
+
+    if (loading) {
+        return (
+            <div className={styles.skeletonContainer}>
+                <Skeleton shape="rectangle" width="100%" height="100vh" />
+            </div>
+        )
+    }
+
     const rightToolbarTemplate = () => {
         return (
             <div className="flex justify-between w-full">
                 <InputText
                     id="globalFilter"
                     placeholder="Pesquisar"
-                    onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, global: { value: e.target.value, matchMode: "contains" } })}
+                    onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, text: e.target.value })}
+                    style={{
+                        width: "400px",
+                    }}
+                />
+                <Calendar
+                    placeholder="Data inicial"
+                    value={filters.startDate}
+                    onChange={(e) => setFilters({ ...filters, startDate: e.value as Date })}
                     className="ml-2"
+                    showIcon
+                    style={{
+                        width: "200px",
+                        marginLeft: "40px",
+                    }}
+                    dateFormat="dd/mm/yy" // Define o formato da data
+                />
+                <Calendar
+                    placeholder="Data final"
+                    value={filters.endDate}
+                    onChange={(e) => setFilters({ ...filters, endDate: e.value as Date })}
+                    className="ml-2"
+                    showIcon
+                    style={{
+                        width: "200px",
+                        marginLeft: "40px",
+                    }}
+                    dateFormat="dd/mm/yy" // Define o formato da data
+                />
+
+                <Dropdown
+                    value={filters.user}
+                    options={users}
+                    onChange={(e) => setFilters({ ...filters, user: e.value })}
+                    placeholder="Selecionar Usuário"
+                    className="ml-2"
+                    style={{
+                        width: "400px",
+                        marginLeft: "40px",
+                    }}
                 />
                 <Button
                     label="Exportar Excel"
@@ -204,22 +273,9 @@ export default function Logs() {
             <Toast ref={toast} />
             <div className="card">
                 <Toolbar className="p-mb-4 p-toolbar" right={rightToolbarTemplate}></Toolbar>
-                <DataTable
-                    filters={filters}
-                    onFilter={(e) => setFilters(e.filters as DataTableFilterMeta)}
-                    header="Logs"
-                    style={{
-                        width: "100%",
-                        overflow: "auto",
-                        border: "1px solid #ccc",
-                    }}
-                    value={logs}
-                    paginator
-                    rows={7}
-                    rowsPerPageOptions={[7, 10, 25, 50]}
-                >
+                <DataTable value={filteredLogs} paginator rows={7} rowsPerPageOptions={[7, 10, 25, 50]}>
                     <Column align="center" field="action" header="Ação" sortable></Column>
-                    <Column align="center" field="type" body={(rowData) => <LogBadge type={rowData.type} />} header="Tipo" sortable></Column>
+                    <Column align="center" field="type" header="Tipo" sortable></Column>
                     <Column align="center" field="user.username" header="Usuário" sortable></Column>
                     <Column
                         align="center"
@@ -227,16 +283,6 @@ export default function Logs() {
                         header="Data de Criação"
                         body={(rowData) => {
                             const date = new Date(rowData.createdAt)
-                            return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}`
-                        }}
-                        sortable
-                    ></Column>
-                    <Column
-                        align="center"
-                        field="updatedAt"
-                        header="Data de Atualização"
-                        body={(rowData) => {
-                            const date = new Date(rowData.updatedAt)
                             return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}`
                         }}
                         sortable
