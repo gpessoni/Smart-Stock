@@ -265,6 +265,17 @@ export default function Inventories() {
         return (
             <div className="flex justify-between w-full">
                 <Button label="Novo Inventário" icon="pi pi-plus" className="p-button-success" onClick={openNew} />
+                <Button
+                    label="Processar Inventários"
+                    style={{
+                        marginLeft: "1em",
+                    }}
+                    icon="pi pi-check"
+                    className="p-button-info"
+                    onClick={() => {
+                        setVisible(true)
+                    }}
+                />
             </div>
         )
     }
@@ -454,6 +465,33 @@ export default function Inventories() {
                             rows={10}
                             className="datatable-responsive"
                         >
+                            <Column
+                                header="Imagem"
+                                body={(rowData) => {
+                                    const imageSrc = rowData.product.image ? `data:image/jpeg;base64,${rowData.product.image}` : ""
+                                    return (
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                height: "80px",
+                                                width: "80px",
+                                                backgroundColor: rowData.product.image ? "transparent" : "#f0f0f0",
+                                                borderRadius: "4px",
+                                                overflow: "hidden",
+                                            }}
+                                        >
+                                            {rowData.product.image ? (
+                                                <img src={imageSrc} alt={rowData.product.description} style={{ maxWidth: "100%", maxHeight: "100%" }} />
+                                            ) : (
+                                                <i className="pi pi-image" style={{ fontSize: "2em", color: "#888" }}></i>
+                                            )}
+                                        </div>
+                                    )
+                                }}
+                            ></Column>
+
                             <Column field="product.code" header="Código" sortable />
                             <Column field="product.description" header="Descrição" sortable />
                             <Column field="storageAddress.address" header="Endereço" sortable />

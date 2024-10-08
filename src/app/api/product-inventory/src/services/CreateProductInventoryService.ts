@@ -25,6 +25,7 @@ export async function createProductInventoryService(req: Request) {
             include: {
                 product: {
                     select: {
+                        image: true,
                         code: true,
                         description: true,
                     },

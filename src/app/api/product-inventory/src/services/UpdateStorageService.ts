@@ -33,6 +33,7 @@ export async function updateProductInventoryService(id: string, body: any) {
             include: {
                 product: {
                     select: {
+                        image: true,
                         code: true,
                         description: true,
                     },
