@@ -180,6 +180,21 @@ export default function Logs() {
         )
     }
 
+    const getBadgeStyle = (type: string) => {
+        switch (type) {
+            case "CREATE":
+                return { backgroundColor: "#4caf50", color: "#fff" } // verde
+            case "UPDATE":
+                return { backgroundColor: "#ff9800", color: "#fff" } // laranja
+            case "DELETE":
+                return { backgroundColor: "#f44336", color: "#fff" } // vermelho
+            case "LIST":
+                return { backgroundColor: "#2196f3", color: "#fff" } // azul
+            default:
+                return { backgroundColor: "#9e9e9e", color: "#fff" } // cinza
+        }
+    }
+
     const rightToolbarTemplate = () => {
         return (
             <div className="flex justify-between w-full">
@@ -275,7 +290,25 @@ export default function Logs() {
                 <Toolbar className="p-mb-4 p-toolbar" right={rightToolbarTemplate}></Toolbar>
                 <DataTable value={filteredLogs} paginator rows={7} rowsPerPageOptions={[7, 10, 25, 50]}>
                     <Column align="center" field="action" header="Ação" sortable></Column>
-                    <Column align="center" field="type" header="Tipo" sortable></Column>
+                    <Column
+                        align="center"
+                        field="type"
+                        header="Tipo"
+                        sortable
+                        body={(rowData) => (
+                            <span
+                                style={{
+                                    padding: "0.5em 1em",
+                                    borderRadius: "1em",
+                                    display: "inline-block",
+                                    ...getBadgeStyle(rowData.type), 
+                                }}
+                            >
+                                {rowData.type} 
+                            </span>
+                        )}
+                    ></Column>
+
                     <Column align="center" field="user.username" header="Usuário" sortable></Column>
                     <Column
                         align="center"
