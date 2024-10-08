@@ -4,6 +4,7 @@ import { HttpStatus } from "@/app/api/config/http/httpUtils"
 import { getDepartmentByIdService } from "../src/services/GetDepartmentByIdService"
 import { updateDepartmentService } from "../src/services/UpdateDepartmentService"
 import { authMiddleware } from "@/app/api/config/middlewares/authMiddleware"
+import { logMiddleware } from "../../config/middlewares/logMiddleware"
 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
     const authResponse = authMiddleware(req)
@@ -12,6 +13,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     }
 
     try {
+        await logMiddleware(req, "Deletou um departamento", "DELETE")
         return await deleteDepartmentService(params.id)
     } catch (error) {
         return NextResponse.json({ message: "Erro no servidor", error: (error as Error).message }, { status: HttpStatus.INTERNAL_SERVER_ERROR })

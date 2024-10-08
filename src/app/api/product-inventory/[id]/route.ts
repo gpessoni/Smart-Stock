@@ -4,6 +4,7 @@ import { deleteProductInventoryService } from "../src/services/DeleteProductInve
 import { getProductInventoryByIdService } from "../src/services/GetStorageByIdService"
 import { updateProductInventoryService } from "../src/services/UpdateStorageService"
 import { authMiddleware } from "@/app/api/config/middlewares/authMiddleware"
+import { logMiddleware } from "../../config/middlewares/logMiddleware"
 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
     const authResponse = authMiddleware(req)
@@ -12,6 +13,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     }
 
     try {
+        await logMiddleware(req, "Deletou um Inventário", "DELETE")
         return await deleteProductInventoryService(params.id)
     } catch (error) {
         return NextResponse.json({ message: "Erro no servidor", error: (error as Error).message }, { status: HttpStatus.INTERNAL_SERVER_ERROR })

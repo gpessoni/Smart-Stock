@@ -4,6 +4,7 @@ import { HttpStatus } from "@/app/api/config/http/httpUtils"
 import { getProductByIdService } from "../src/services/GetProductByIdService"
 import { updateProductService } from "../src/services/UpdateProductService"
 import { authMiddleware } from "@/app/api/config/middlewares/authMiddleware"
+import { logMiddleware } from "../../config/middlewares/logMiddleware"
 
 export async function DELETE(req: Request, context: { params: { id: string } }) {
     const authResponse = authMiddleware(req)
@@ -16,6 +17,9 @@ export async function DELETE(req: Request, context: { params: { id: string } }) 
         if (!id) {
             return NextResponse.json({ error: "ID do produto é obrigatório" }, { status: HttpStatus.BAD_REQUEST })
         }
+
+        await logMiddleware(req, "Deletou um Tipo de Produto", "DELETE")
+
         return await deleteProductService(id)
     } catch (error) {
         return NextResponse.json({ message: "Erro no servidor", error: (error as Error).message }, { status: HttpStatus.INTERNAL_SERVER_ERROR })
