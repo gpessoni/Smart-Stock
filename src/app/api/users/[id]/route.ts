@@ -19,7 +19,7 @@ export async function GET(req: Request, context: { params: { id: string } }) {
         const { id } = context.params
 
         if (!id) {
-            return NextResponse.json({ error: "ID do Grupo de produto é obrigatório" }, { status: HttpStatus.BAD_REQUEST })
+            return NextResponse.json({ error: "ID do usuário é obrigatório" }, { status: HttpStatus.BAD_REQUEST })
         }
 
         return await getUserByIdService(id)
@@ -34,9 +34,9 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
         const body = await req.json()
 
         if (!id) {
-            return NextResponse.json({ error: "ID do Armazém é obrigatório" }, { status: HttpStatus.BAD_REQUEST })
+            return NextResponse.json({ error: "ID do usuário é obrigatório" }, { status: HttpStatus.BAD_REQUEST })
         }
-
+        await logMiddleware(req, "Editou um Usuário", "UPDATE")
         return await updateUserService(id, body)
     } catch (error) {
         return NextResponse.json({ message: "Erro no servidor", error: (error as Error).message }, { status: HttpStatus.INTERNAL_SERVER_ERROR })

@@ -53,6 +53,7 @@ export async function PUT(req: Request, context: { params: { id: string } }) {
             return NextResponse.json({ error: "ID do departamento é obrigatório" }, { status: HttpStatus.BAD_REQUEST })
         }
 
+        await logMiddleware(req, "Editou um Departamento", "UPDATE")
         return await updateDepartmentService(id, body)
     } catch (error) {
         return NextResponse.json({ message: "Erro no servidor", error: (error as Error).message }, { status: HttpStatus.INTERNAL_SERVER_ERROR })

@@ -26,6 +26,7 @@ export async function GET(req: Request) {
     }
 
     try {
+        await logMiddleware(req, "Listou os Produtos", "LIST")
         return await listProductsService()
     } catch (error) {
         return NextResponse.json(

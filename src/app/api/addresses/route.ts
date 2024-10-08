@@ -26,6 +26,7 @@ export async function GET(req: Request) {
     }
 
     try {
+        await logMiddleware(req, "Listou os Endereços", "LIST")
         return await listStorageAddressesService()
     } catch (error) {
         return NextResponse.json({ message: "Erro no servidor", error: (error as Error).message }, { status: HttpStatus.INTERNAL_SERVER_ERROR })

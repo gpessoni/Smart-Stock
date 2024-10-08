@@ -53,6 +53,7 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
             return NextResponse.json({ error: "ID do Armazém é obrigatório" }, { status: HttpStatus.BAD_REQUEST })
         }
 
+        await logMiddleware(req, "Editou uma Unidade de Medida", "UPDATE")
         return await updateUnitOfMeasureService(id, body)
     } catch (error) {
         return NextResponse.json({ message: "Erro no servidor", error: (error as Error).message }, { status: HttpStatus.INTERNAL_SERVER_ERROR })

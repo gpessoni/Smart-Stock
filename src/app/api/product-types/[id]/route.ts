@@ -4,6 +4,7 @@ import { deleteTypesService } from "../src/services/DeleteTypeServices"
 import { getProductTypeByIdService } from "../src/services/GetProductTypeByIdService"
 import { updateProductTypeService } from "../src/services/UpdateProductTypeService"
 import { authMiddleware } from "@/app/api/config/middlewares/authMiddleware"
+import { logMiddleware } from "../../config/middlewares/logMiddleware"
 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
     const authResponse = authMiddleware(req)
@@ -51,6 +52,7 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
             return NextResponse.json({ error: "ID do Armazém é obrigatório" }, { status: HttpStatus.BAD_REQUEST })
         }
 
+        await logMiddleware(req, "Editou um Tipo de Produto", "UPDATE")
         return await updateProductTypeService(id, body)
     } catch (error) {
         return NextResponse.json({ message: "Erro no servidor", error: (error as Error).message }, { status: HttpStatus.INTERNAL_SERVER_ERROR })

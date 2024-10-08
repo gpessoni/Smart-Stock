@@ -54,6 +54,7 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
         if (!id) {
             return NextResponse.json({ error: "ID do Grupo de produto é obrigatório" }, { status: HttpStatus.BAD_REQUEST })
         }
+        await logMiddleware(req, "Editou um Grupo de Produtos", "UPDATE")
         return await updateProductGroupService(id, body)
     } catch (error) {
         return NextResponse.json({ message: "Erro no servidor", error: (error as Error).message }, { status: HttpStatus.INTERNAL_SERVER_ERROR })

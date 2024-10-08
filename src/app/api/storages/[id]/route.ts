@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 import { deleteStorageService } from "../src/services/DeleteStorageService"
 import { getStorageByIdService } from "../src/services/GetStorageByIdService"
 import { updateStorageService } from "../src/services/UpdateStorageService"
-import { authMiddleware } from "@/app/api/config/middlewares/authMiddleware" 
+import { authMiddleware } from "@/app/api/config/middlewares/authMiddleware"
 import { logMiddleware } from "../../config/middlewares/logMiddleware"
 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
@@ -53,6 +53,7 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
             return NextResponse.json({ error: "ID do Armazém é obrigatório" }, { status: HttpStatus.BAD_REQUEST })
         }
 
+        await logMiddleware(req, "Editou um Armazém", "UPDATE")
         return await updateStorageService(id, body)
     } catch (error) {
         return NextResponse.json({ message: "Erro no servidor", error: (error as Error).message }, { status: HttpStatus.INTERNAL_SERVER_ERROR })

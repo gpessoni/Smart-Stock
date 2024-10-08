@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { reverseTransferService } from "../src/services/ReverseTransferService"
 import { HttpStatus } from "@/app/api/config/http/httpUtils"
 import { authMiddleware } from "@/app/api/config/middlewares/authMiddleware"
+import { logMiddleware } from "../../config/middlewares/logMiddleware"
 
 export async function PATCH(req: Request, context: { params: { id: string } }) {
     const authResponse = authMiddleware(req)
@@ -16,6 +17,7 @@ export async function PATCH(req: Request, context: { params: { id: string } }) {
             return NextResponse.json({ error: "ID do Armazém é obrigatório" }, { status: HttpStatus.BAD_REQUEST })
         }
 
+        await logMiddleware(req, "Editou um Armazém", "UPDATE")
         return await reverseTransferService(id)
     } catch (error) {
         return NextResponse.json({ message: "Erro no servidor", error: (error as Error).message }, { status: HttpStatus.INTERNAL_SERVER_ERROR })
