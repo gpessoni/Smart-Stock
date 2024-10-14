@@ -36,6 +36,13 @@ type UserOption = {
     value: string
 }
 
+const logTypes = [
+    { label: "Listar", value: "LIST" },
+    { label: "Criar", value: "CREATE" },
+    { label: "Deletar", value: "DELETE" },
+    { label: "Atualizar", value: "UPDATE" },
+]
+
 export default function Logs() {
     const [loading, setLoading] = useState<boolean>(true)
     const [logs, setLogs] = useState<Log[]>([])
@@ -45,6 +52,7 @@ export default function Logs() {
         user: null as string | null,
         startDate: null as Date | null,
         endDate: null as Date | null,
+        actionType: null as string | null,
     })
     const [users, setUsers] = useState<UserOption[]>([])
     const toast = useRef<Toast>(null)
@@ -113,6 +121,10 @@ export default function Logs() {
 
         if (filters.user) {
             filtered = filtered.filter((log) => log.userId === filters.user)
+        }
+
+        if (filters.actionType) {
+            filtered = filtered.filter((log) => log.type === filters.actionType)
         }
 
         // Filtro por intervalo de datas
@@ -203,7 +215,7 @@ export default function Logs() {
                     placeholder="Pesquisar"
                     onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({ ...filters, text: e.target.value })}
                     style={{
-                        width: "400px",
+                        width: "250px",
                     }}
                 />
                 <Calendar
@@ -238,10 +250,23 @@ export default function Logs() {
                     placeholder="Selecionar Usuário"
                     className="ml-2"
                     style={{
-                        width: "400px",
+                        width: "200px",
                         marginLeft: "40px",
                     }}
                 />
+
+                <Dropdown
+                    value={filters.actionType}
+                    options={logTypes}
+                    onChange={(e) => setFilters({ ...filters, actionType: e.value })}
+                    placeholder="Tipo de Ação"
+                    className="ml-2"
+                    style={{
+                        width: "150px",
+                        marginLeft: "40px",
+                    }}
+                />
+
                 <Button
                     label="Exportar Excel"
                     icon="pi pi-file-excel"
@@ -301,10 +326,10 @@ export default function Logs() {
                                     padding: "0.5em 1em",
                                     borderRadius: "1em",
                                     display: "inline-block",
-                                    ...getBadgeStyle(rowData.type), 
+                                    ...getBadgeStyle(rowData.type),
                                 }}
                             >
-                                {rowData.type} 
+                                {rowData.type}
                             </span>
                         )}
                     ></Column>
