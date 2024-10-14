@@ -77,6 +77,11 @@ export async function createTransferService(req: Request) {
                 toAddressId,
                 quantity,
             },
+            include: {
+                product: true,
+                fromAddress: true,
+                toAddress: true,
+            },
         })
 
         return NextResponse.json(transfer, { status: HttpStatus.CREATED })
