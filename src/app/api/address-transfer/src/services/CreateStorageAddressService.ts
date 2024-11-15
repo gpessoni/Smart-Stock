@@ -68,6 +68,9 @@ export async function createTransferService(req: Request) {
             data: {
                 balance: fromBalance.balance - quantity,
             },
+            include: {
+                product: true,
+            },
         })
 
         const transfer = await prisma.addressTransfer.create({
@@ -76,6 +79,9 @@ export async function createTransferService(req: Request) {
                 fromAddressId,
                 toAddressId,
                 quantity,
+            },
+            include: {
+                product: true,
             },
         })
 
