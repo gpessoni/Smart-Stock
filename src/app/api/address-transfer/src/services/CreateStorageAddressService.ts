@@ -82,6 +82,8 @@ export async function createTransferService(req: Request) {
             },
             include: {
                 product: true,
+                fromAddress: true,
+                toAddress: true,
             },
         })
 

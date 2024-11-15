@@ -21,6 +21,11 @@ export async function reverseTransferService(transferId: string) {
 
         const { productId, fromAddressId, toAddressId, quantity } = originalTransfer
 
+        await prisma.addressTransfer.update({
+            where: { id: transferId },
+            data: { return: true },
+        })
+
         const toBalance = await prisma.productStorageBalance.findFirst({
             where: {
                 productId,
@@ -79,6 +84,11 @@ export async function reverseTransferService(transferId: string) {
                 toAddressId: fromAddressId,
                 quantity,
                 return: true,
+            },
+            include: {
+                product: true,
+                fromAddress: true,
+                toAddress: true,
             },
         })
 
