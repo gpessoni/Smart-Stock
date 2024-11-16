@@ -26,13 +26,13 @@ Tecnologias Utilizadas
 Como Iniciar o Projeto
 ----------------------
 
-1.  bashCopiar códigogit clone cd SmartStocknpm install
+1.  git clone cd SmartStocknpm install
     
-2.  bashCopiar códigodocker-compose up
+2.  docker-compose up
     
-3.  bashCopiar códigonpx prisma migrate dev
+3.  npx prisma migrate dev
     
-4.  bashCopiar códigonpm run dev# ouyarn dev# oupnpm dev# oubun dev
+4.  npm run dev# ouyarn dev# oupnpm dev# oubun dev
     
 5.  **Acessar a aplicação**: Abra [http://localhost:3000](http://localhost:3000) no seu navegador.
     
